@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# skript, ktery zatim nahrazuje vysledny program
+echo "output"
+exit 0;
+
+

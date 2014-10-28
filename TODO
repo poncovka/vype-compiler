@@ -1,0 +1,10 @@
+
+TODO
+
+* vytvořit třídu, která bude řídit parser (teď je main funkce v parseru)
+* vytvořit třídu pro výpis chybových hlášek, parser i lexer by měly volat její funkce, zajistí vrácení správného chybového kódu
+* chyby lexikální analýzy - zatím se nerozlišují od syntaktických
+
+* jakmile začne skript vracet správné kódy, dopsat testy pro lexer a parser
+* napsat třídu pro AST
+* doplnit akce parseru a lexeru

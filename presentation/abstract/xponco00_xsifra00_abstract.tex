@@ -1,0 +1,26 @@
+\documentclass[a4paper, 12pt]{article}
+
+\newcommand{\uv}[1]{\quotedblbase #1\textquotedblleft}
+
+\usepackage[left=2.5cm, text={16cm, 25cm}, top=2.5cm]{geometry}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\title{Optimizing compilers: Handling Control Flow}
+\author{Vendula Poncová (\texttt{xponco00}) \\ Martin Šifra (\texttt{xsifra00})}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+One of the challenges of optimizing compilers for high-performance architectures can be vectorizing a program with control flow, specifically with conditional branches in loops. Control flow creates a new type of constraints on program transformations: a control dependence. There are two strategies for dealing with control. While \textit{if-conversion} simply converts the control dependences to data dependences, \textit{control dependence} includes control dependence edges in the dependence graph. That complicates the code generation process. 
+
+If-conversion is a composition of two methods: \textit{branch relocation} and \textit{branch removal}. Branch relocation can generate very complex guarding conditions, therefore it is suitable to simplify them. However, Boolean simplification is NP-complete, so we need to redefine the problem and find another way of computation. Once the branch relocation is finished, we can transform the conditional statements to vector statements. Considering the fact, that sometimes vectorization is not possible, we can apply a transformation called \textit{if-reconstruction}, to prevent the performance degradation.
+
+By establishing a control dependence as a type of constraint, we can prevent the undesirable effects of if-conversions. Control dependences between blocks of statements can be represented by a control dependence graph, that enables to generate the optimized code.
+
+
+\end{document}
+% end of file

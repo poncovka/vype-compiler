@@ -16,7 +16,7 @@ using namespace std;
 %union {
   int ival;
   char cval;
-  std::string * sval;
+  std::string *sval;
 };
 
 /* TOKENS */
@@ -62,11 +62,13 @@ functions:
 
 fce_declaration: 
     type ID '(' VOID ')' ';'  
-  | type ID '(' datatype_list ')' ';' ;
+  | type ID '(' datatype_list ')' ';' 
+  ;
 
 fce_definition:  
     type ID '(' VOID ')' '{' stmt_list '}'
-  | type ID '(' param_list ')' '{' stmt_list '}' ;
+  | type ID '(' param_list ')' '{' stmt_list '}' 
+  ;
 
 stmt_list:
   | '{' stmt_list '}'
@@ -117,22 +119,6 @@ id_list: ID | ID ',' id_list ;
 expr_list: expr | expr ',' expr_list ;
 
 %%
-
-main(int argc, char **argv)
-{
-  extern FILE *yyin;
-  if (argc >= 2) {
-    if (!(yyin = fopen(argv[1], "r"))) {
-      std::cerr << "cannot open input file: " << argv[1] << std::endl;
-      exit(0);
-    }
-  } 
-
-  yy::parser parser;
-  int result = parser.parse();
-
-  return result;
-}
 
 namespace yy {
   void parser::error(location const &loc, const std::string& s)

@@ -13,11 +13,11 @@
 
 //////////////////////////////////// Variable
 
-Variable::Variable(Type type) {
+Variable::Variable(Symtable::Type type) {
   this->type = type;
 }
 
-Variable::Variable(string &id, Type type) {
+Variable::Variable(string &id, Symtable::Type type) {
   this->type = type;
   this->id = id;
 }
@@ -54,7 +54,7 @@ VariableTable::~VariableTable() {
 
 //////////////////////////////////// Function
 
-Function::Function(string &id, list<Variable*> params, Type type) {
+Function::Function(string &id, list<Variable*> params, Symtable::Type type) {
 
   this->type = type;
   this->id = id;
@@ -63,10 +63,6 @@ Function::Function(string &id, list<Variable*> params, Type type) {
 }
 
 Function::~Function() {
-
-  for(tvarlist::iterator i=params.begin(); i!=params.end(); ++i) {
-    delete *i;
-  }
 
   for(ttablelist::iterator i=variables.begin(); i!=variables.end(); ++i) {
     delete *i;
@@ -171,5 +167,4 @@ void SymbolTable::leaveBlock() {
   }
 }
 
-
-
+/* end of file */

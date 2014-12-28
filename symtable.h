@@ -20,9 +20,13 @@
 
 using namespace std;
 
-//////////////////////////////////// Type
+//////////////////////////////////// Enums
 
-enum Type { VOID, TINT, TCHAR, TSTRING };
+struct Symtable {
+  enum Type { VOID, TINT, TCHAR, TSTRING };
+  enum Operator { ADD, SUB, MUL, DIV, MOD, LT, LTE, GT, GTE, EQ, NEQ, AND, OR, NEG };
+};
+
 
 //////////////////////////////////// Inst
 
@@ -35,11 +39,14 @@ typedef std::list<Instruction*>::iterator InstructionIter;
 class Variable {
 
 public:
-  Type type;
+  Symtable::Type type;
   string id;
+  
+  int ival;
+  string sval;
 
-  Variable(Type type);
-  Variable(string &id, Type type);
+  Variable(Symtable::Type type);
+  Variable(string &id, Symtable::Type type);
   
 };
 
@@ -66,14 +73,14 @@ class Function {
   typedef list<VariableTable*> ttablelist;
 
 public:
-  Type type;
+  Symtable::Type type;
   string id;
   tvarlist params;
   ttablelist variables;
   
   InstructionList instructions;
 
-  Function(string &id, list<Variable*> params, Type type);
+  Function(string &id, list<Variable*> params, Symtable::Type type);
   ~Function();
   
   VariableTable* createVariableTable();

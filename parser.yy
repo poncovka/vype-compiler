@@ -7,21 +7,29 @@
 %define parser_class_name "parser"
 %define parse.error verbose
 
+%code requires{
+  # include "driver.h"
+  # include "symtable.h"
+}
+
+%param { Driver& driver }
+
 %{
 # include <iostream>
 # include <cstdio>
-using namespace std;
+# include "driver.h"
+# include "symtable.h"
 %}
 
 %union {
   int ival;
-  char cval;
   std::string *sval;
+  Type tval;
 };
 
 /* TOKENS */
 %token <ival> NUM
-%token <cval> CHAR
+%token <sval> CHAR
 %token <sval> STRING
 %token <sval> ID
 
@@ -38,18 +46,21 @@ using namespace std;
 %nonassoc NEG
 %nonassoc '(' ')'
 
+%type <tval> type datatype VOID TINT TCHAR TSTR
+
 %start program
 
 %{
   extern int yylex(yy::parser::semantic_type *yylval,
-       yy::parser::location_type* yylloc);
+                   yy::parser::location_type *yylloc,
+                   Driver& driver);
 
   extern FILE *yyin;
 %}
 
 %locations
 %initial-action {
- @$.begin.filename = @$.end.filename = new std::string("filename"); /* set proper filename!!! */
+ @$.begin.filename = @$.end.filename = driver.filename; /* set proper filename!!! */
 }
 %%
 
@@ -61,17 +72,17 @@ functions:
   ;
 
 fce_declaration: 
-    type ID '(' VOID ')' ';'  
-  | type ID '(' datatype_list ')' ';' 
+    type ID '(' VOID ')' ';'                 {driver.addFunction(*$2, $1);}
+  | type ID '(' datatype_list ')' ';'        {driver.addFunction(*$2, $1);}
   ;
 
 fce_definition:  
-    type ID '(' VOID ')' '{' stmt_list '}'
-  | type ID '(' param_list ')' '{' stmt_list '}' 
+    type ID '(' VOID ')'       '{' {driver.enterFunc(*$2, $1);} stmt_list {driver.leaveBlock();} '}' 
+  | type ID '(' param_list ')' '{' {driver.enterFunc(*$2, $1);} stmt_list {driver.leaveBlock();} '}' 
   ;
 
 stmt_list:
-  | '{' stmt_list '}'
+  | '{' {driver.enterBlock();} stmt_list {driver.leaveBlock();} '}'
   | stmt stmt_list
   ;
 
@@ -79,9 +90,22 @@ stmt:
     datatype id_list ';'
   | ID '=' expr ';'
   | ID '(' argument_list ')' ';'
-  | IF '(' expr ')' '{' stmt_list '}' ELSE '{' stmt_list '}'
-  | WHILE '(' expr ')' '{' stmt_list '}'
-  | RETURN '(' expr ')' ';'
+  
+  | IF '(' expr ')' 
+    '{' {driver.enterBlock();} 
+      stmt_list {driver.leaveBlock();} 
+    '}' 
+    ELSE 
+    '{' {driver.enterBlock();} 
+      stmt_list {driver.leaveBlock();} 
+    '}'
+    
+  | WHILE '(' expr ')' 
+    '{' {driver.enterBlock();} 
+      stmt_list {driver.leaveBlock();} 
+    '}'
+    
+  | RETURN expr ';'
   ;
 
 expr:
@@ -108,8 +132,16 @@ expr:
   | '(' datatype ')' expr
   ;
 
-type: VOID | datatype ;
-datatype: TINT | TCHAR | TSTR ;
+type: 
+    VOID        { $$ = VOID; }
+  | datatype    { $$ = $1; }
+  ;
+  
+datatype: 
+    TINT        { $$ = TINT; }
+  | TCHAR       { $$ = TCHAR; }
+  | TSTR        { $$ = TSTRING; }
+  ;
 
 datatype_list: datatype | datatype ',' datatype_list ;
 param_list: datatype ID | datatype ID ',' param_list ;

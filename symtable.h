@@ -20,14 +20,26 @@
 
 using namespace std;
 
+//////////////////////////////////// Type
+
+enum Type { VOID, TINT, TCHAR, TSTRING };
+
+//////////////////////////////////// Inst
+
+class Instruction {};
+typedef std::list<Instruction*> InstructionList;
+typedef std::list<Instruction*>::iterator InstructionIter;
+
+//////////////////////////////////// Variable
+
 class Variable {
 
 public:
-  int type;
+  Type type;
   string id;
-  
-  Variable(int type);
-  Variable(int type, string &id);
+
+  Variable(Type type);
+  Variable(string &id, Type type);
   
 };
 
@@ -46,22 +58,25 @@ public:
 
 };
 
+//////////////////////////////////// Function
+
 class Function {
 
   typedef list<Variable*> tvarlist;
   typedef list<VariableTable*> ttablelist;
 
 public:
-  int type;
+  Type type;
   string id;
   tvarlist params;
   ttablelist variables;
+  
+  InstructionList instructions;
 
-  Function(int type, string &id);
+  Function(string &id, list<Variable*> params, Type type);
   ~Function();
   
   VariableTable* createVariableTable();
-  void addParameter(Variable *var);
 
 };
 
@@ -81,6 +96,7 @@ public:
 
 };
 
+//////////////////////////////////// SymbolTable
 
 class SymbolTable {
 
@@ -94,7 +110,6 @@ public:
   tstack stack;
 
   SymbolTable();
-  ~SymbolTable();
   
   Variable* lookupVariable(string &id);
   Function* lookupFunction(string &id);
@@ -106,6 +121,62 @@ public:
   void enterBlock();
   void leaveBlock();
 
+};
+
+//////////////////////////////////// Instructions
+
+// result = a op b
+class ExpressionInst : Instruction {
+  
+  public:
+    Variable *a;
+    Variable *b;
+    Variable *result;
+    int op;
+  
+};
+
+// a = b;
+class AssignmentInst : Instruction {
+
+  public:
+    Variable *a;
+    Variable *result;
+};
+
+// goto a
+class JumpInst : Instruction {
+  
+  public:
+    InstructionIter jump;
+  
+};
+
+// if a then goto b
+class JumpIfInst : Instruction {
+  
+  public:
+    Variable *cond;
+    InstructionIter jump;
+  
+};
+
+// a = func(b,c)
+class CallInst : Instruction {
+  
+  public:
+    Function *fce;
+    list<Variable*> params;
+    Variable *result;
+  
+};
+
+// return a
+class ReturnInst : Instruction {
+  
+  public:
+    Variable *result;
+  
 };
 
 

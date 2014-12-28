@@ -3,11 +3,13 @@
 %{
 
 # include <cstdlib>
+# include "driver.h"
 # include "parser.tab.hh"
 
 # define YY_USER_ACTION  yylloc->columns(yyleng);
 # define YY_DECL int yylex(yy::parser::semantic_type *yylval,\
-                           yy::parser::location_type *yylloc)
+                           yy::parser::location_type *yylloc,\
+                           Driver& driver)
 
 int oldstate;
 typedef yy::parser::token token;
@@ -58,10 +60,10 @@ typedef yy::parser::token token;
 "while"  { return token::WHILE; }
 "return" { return token::RETURN; }
 
-[0-9]+	 { return token::NUM; }
-'(\\.|[^\\'])+' {return token::CHAR; }
-\"(\\.|[^\\"])*\" { return token::STRING; }
-[a-zA-Z_][a-zA-Z0-9_]*	{ return token::ID; }
+[0-9]+	 { yylval->ival = atoi(yytext); return token::NUM; }
+'(\\.|[^\\'])+' { yylval->sval = new std::string(yytext); return token::CHAR; }
+\"(\\.|[^\\"])*\" { yylval->sval = new std::string(yytext); return token::STRING; }
+[a-zA-Z_][a-zA-Z0-9_]*	{ yylval->sval = new std::string(yytext); return token::ID; }
 
 "//".*           ;
 "/*"             { oldstate = YY_START; BEGIN COMMENT; }

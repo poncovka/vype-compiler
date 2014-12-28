@@ -11,14 +11,13 @@
 
 #include "symtable.h"
 
-
 //////////////////////////////////// Variable
 
-Variable::Variable(int type) {
+Variable::Variable(Type type) {
   this->type = type;
 }
 
-Variable::Variable(int type, string &id) {
+Variable::Variable(string &id, Type type) {
   this->type = type;
   this->id = id;
 }
@@ -55,10 +54,11 @@ VariableTable::~VariableTable() {
 
 //////////////////////////////////// Function
 
-Function::Function(int type, string &id) {
+Function::Function(string &id, list<Variable*> params, Type type) {
 
   this->type = type;
   this->id = id;
+  this->params.splice(this->params.begin(), params);
   
 }
 
@@ -79,12 +79,6 @@ VariableTable* Function::createVariableTable() {
   VariableTable *table = new VariableTable;
   variables.push_back(table);
   return table;
-}
-
-void Function::addParameter(Variable *var) {
-
-  params.push_back(var);
-
 }
 
 //////////////////////////////////// FunctionTable
@@ -128,18 +122,16 @@ bool SymbolTable::insert(Function *func) {
   return functionTable.insert(func);
 }
 
-Function* SymbolTable::lookupFunction(string &id) {
-  return functionTable.lookup(id);
-}
-
 
 bool SymbolTable::insert(Variable *var) {
-  
   if (stack.empty()) return false;
   
   VariableTable *table = stack.front();
   return table->insert(var);
+}
 
+Function* SymbolTable::lookupFunction(string &id) {
+  return functionTable.lookup(id);
 }
 
 Variable* SymbolTable::lookupVariable(string &id) {

@@ -9,10 +9,10 @@
  * Main program.
  */
 
-#include "parser.tab.hh"
-#include "symtable.h"
 #include <iostream>
 #include <cstdio>
+#include "parser.tab.hh"
+#include "driver.h"
 
 int main(int argc, char **argv) {
 
@@ -25,7 +25,8 @@ int main(int argc, char **argv) {
     }
   } 
 
-  yy::parser parser;
+  Driver driver;
+  yy::parser parser(driver);
   int result = parser.parse();
 
   return result;

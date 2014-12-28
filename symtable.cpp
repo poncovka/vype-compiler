@@ -47,7 +47,7 @@ Variable* VariableTable::lookup(string &id) {
 VariableTable::~VariableTable() {
 
   for(tmap::iterator i=symbolTable.begin(); i != symbolTable.end(); ++i) {
-    delete i->second;
+    //delete i->second;
   }
 
 }
@@ -165,6 +165,15 @@ void SymbolTable::leaveBlock() {
   if(stack.empty()) {
     actualFunction = NULL;
   }
+}
+
+//////////////////////////////////// Expression
+
+Expression::Expression(Variable *var, InstructionList *l) {
+
+  this->var = var;
+  this->inst.splice(this->inst.begin(), *l);
+
 }
 
 /* end of file */

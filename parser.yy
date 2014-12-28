@@ -22,10 +22,12 @@
 %}
 
 %union {
-  int             ival;
-  std::string    *sval;
-  Variable       *vval;
-  Symtable::Type  tval;
+  int               ival;
+  std::string      *sval;
+  Symtable::Type    tval;
+  Expression       *eval;
+  ExpressionList  *leval;
+  InstructionList  *inst;
 };
 
 /* TOKENS */
@@ -48,7 +50,9 @@
 %nonassoc '(' ')'
 
 %type <tval> type datatype VOID TINT TCHAR TSTR
-%type <vval> expr
+%type <eval> expr
+%type <leval> expr_list argument_list
+%type <inst> stmt_list stmt
 
 %start program
 
@@ -81,27 +85,27 @@ fce_declaration:
 fce_definition:  
     type ID '(' VOID ')'       
     '{'                                   {driver.enterFunc($2, $1);} 
-      stmt_list                           {driver.leaveBlock();} 
-    '}'                                   { /* add stmts to fce */ } 
+      stmt_list                           
+    '}'                                   {driver.leaveFunc($2, $8);}
     
   | type ID '(' param_list ')' 
     '{'                                   {driver.enterFunc($2, $1);} 
-      stmt_list                           {driver.leaveBlock();} 
-    '}'                                   { /* add stmts to fce */ } 
+      stmt_list                           
+    '}'                                   {driver.leaveFunc($2, $8);}
   ;
 
-stmt_list:
+stmt_list:                                {$$ = driver.genInstEmpty();}
   | '{'                                   {driver.enterBlock();} 
       stmt_list                           {driver.leaveBlock();}
-    '}'                                   { /* return $3 */ } 
+    '}'                                   {$$ = $3;} 
      
-  | stmt stmt_list                        { /* add $1 to $2 */ } 
+  | stmt stmt_list                        {$$ = driver.genInstJoin($1, $2);} 
   ;
 
 stmt:
-    datatype id_list ';'                  {driver.addVariables($1);}  
-  | ID '=' expr ';'                       {driver.genAssignment($1, $3);}    
-  | ID '(' argument_list ')' ';'          {driver.genCall($1);}
+    datatype id_list ';'                  {$$ = driver.genVariables($1);}  
+  | ID '=' expr ';'                       {$$ = driver.genAssignment($1, $3);}    
+  | ID '(' argument_list ')' ';'          {$$ = driver.genCall($1, $3);}
   
   | IF '(' expr ')' 
     '{'                                   {driver.enterBlock();} 
@@ -110,14 +114,14 @@ stmt:
     ELSE 
     '{'                                   {driver.enterBlock();} 
       stmt_list                           {driver.leaveBlock();} 
-    '}'                                   { /* generate condition */ } 
+    '}'                                   { /* $$ = driver.genCondition($3, $6, $10); */ } 
     
-  | WHILE '(' expr ')' 
+  | WHILE '(' expr ')'                    
     '{'                                   {driver.enterBlock();} 
       stmt_list                           {driver.leaveBlock();} 
-    '}'                                   { /* generate whileloop */ } 
+    '}'                                   {$$ = driver.genWhile($3, $7);} 
     
-  | RETURN expr ';'                       {driver.genReturn($2);}
+  | RETURN expr ';'                       {$$ = driver.genReturn($2);}
   ;
 
 expr:
@@ -160,21 +164,23 @@ datatype_list:
   | datatype ',' datatype_list            { driver.addType($1); }
   ;
   
+id_list: 
+    ID                                    { driver.addId($1); }
+  | ID ',' id_list                        { driver.addId($1); }
+  ;  
+  
 param_list: 
     datatype ID                           { driver.addParam($2, $1); }
   | datatype ID ',' param_list            { driver.addParam($2, $1); }
   ;
   
-argument_list: | expr_list ;
-
-id_list: 
-    ID                                    { driver.addId($1); }
-  | ID ',' id_list                        { driver.addId($1); }
+argument_list:                            { $$ = driver.genExprEmpty(); }
+  | expr_list                             { $$ = $1; }
   ;
   
 expr_list: 
-    expr                                  { driver.addExpression($1); }
-  | expr ',' expr_list                    { driver.addExpression($1); }
+    expr                                  { $$ = driver.genExprList($1); }
+  | expr ',' expr_list                    { $$ = driver.genExprJoin($1, $3); }
   ;
 
 %%

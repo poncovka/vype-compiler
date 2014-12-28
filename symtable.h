@@ -109,7 +109,7 @@ class SymbolTable {
 
   typedef deque<VariableTable*> tstack;
 
-public:
+  public:
   Function *main;
   FunctionTable functionTable;
   
@@ -129,6 +129,20 @@ public:
   void leaveBlock();
 
 };
+
+//////////////////////////////////// Expression
+
+class Expression {
+
+  public:
+    Variable *var;
+    InstructionList inst;
+
+    Expression(Variable *var, InstructionList *l);
+};
+
+typedef std::list<Expression*> ExpressionList;
+typedef std::list<Expression*>::iterator ExpressionIter;
 
 //////////////////////////////////// Instructions
 

@@ -35,22 +35,6 @@ void Driver::addFunction(string *id, Symtable::Type type) {
   delete id;
 }
 
-void Driver::addVariables(Symtable::Type type) {
- 
-  Variable *var = NULL;
-  
-  while (!varList.empty()) {
-    var = varList.front();    
-    var->type = type;
-
-    if (!symtable.insert(var)) {
-      // ERROR
-    }    
-    
-    varList.pop_front();
-  } 
-}
-
 void Driver::addParam(string *id, Symtable::Type type) {
   Variable *var = new Variable(*id, type);
   varList.push_back(var);
@@ -68,10 +52,6 @@ void Driver::addId(string *id) {
   varList.push_back(var);
   
   delete id;
-}
-
-void Driver::addExpression(Variable *var) { 
-  varList.push_back(var);
 }
 
 //////////////////////////////////// Driver.get
@@ -129,6 +109,7 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
     
       if (func->params.empty()) {
         // ERROR
+        break;
       }
       
       var = func->params.front();    
@@ -136,7 +117,7 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
         // ERROR
       }
       
-      varList.pop_front();
+      func->params.pop_front();
     }
     
     if (!func->params.empty()) {
@@ -165,9 +146,19 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
       // ERROR
     }
   }
-  
-  delete id;    
 }
+
+void Driver::leaveFunc(string *id, InstructionList *l) {
+  
+  Function *func = symtable.actualFunction;
+  func->instructions.splice(func->instructions.begin(), *l);
+  
+  symtable.leaveBlock();
+  
+  delete l;
+  delete id;
+}
+
   
 void Driver::enterBlock() {
   symtable.enterBlock();
@@ -177,64 +168,38 @@ void Driver::leaveBlock() {
   symtable.leaveBlock();
 }
 
-//////////////////////////////////// Driver.generate
-
-void Driver::genAssignment(string *id, Variable *var) {
-
-  // TODO generate instruction for assignment
-  
-  delete id;
-}
-
-void Driver::genCall(string *id) {
-
-  // TODO generate instruction for calling
-  
-  Variable *var = NULL;
-  
-  while (!varList.empty()) {
-    var = varList.front();    
-    varList.pop_front();
-  }
-  
-  delete id;
-}
-
-void Driver::genReturn(Variable *var) {
-
-  // TODO generate return
-  
-}
-
 //////////////////////////////////// Driver.generateExpression
 
-Variable* Driver::genExprInt(int ival) {
+Expression* Driver::genExprInt(int ival) {
 
   Variable *var = getTempVariable(Symtable::TINT);
   var->ival = ival;
-  return var;
+  
+  return new Expression(var, genInstEmpty());
 
 }
 
-Variable* Driver::genExprChar(string *sval) {
+Expression* Driver::genExprChar(string *sval) {
 
   Variable *var = getTempVariable(Symtable::TCHAR);
   var->sval = *sval;
   delete sval;
-  return var;
+  
+  return new Expression(var, genInstEmpty());
 
 }
 
-Variable* Driver::genExprStr(string *sval) {
+Expression* Driver::genExprStr(string *sval) {
 
   Variable *var = getTempVariable(Symtable::TSTRING);
   var->sval = *sval;
   delete sval;
-  return var;
+  
+  return new Expression(var, genInstEmpty());
 
 }
   
-Variable* Driver::genExprVar(string *id) {
+Expression* Driver::genExprVar(string *id) {
 
   Variable *var = symtable.lookupVariable(*id);
   if (var == NULL) {
@@ -243,11 +208,12 @@ Variable* Driver::genExprVar(string *id) {
   
   Variable *tvar = getTempVariable(var->type);
   delete id;
-  return tvar;
+  
+  return new Expression(tvar, genInstEmpty());
 
 }
 
-Variable* Driver::genExprFce(string *id) {
+Expression* Driver::genExprFce(string *id) {
 
   Function *func = symtable.lookupFunction(*id);
   if (func == NULL) {
@@ -256,19 +222,20 @@ Variable* Driver::genExprFce(string *id) {
   
   Variable *tvar = getTempVariable(func->type);
   delete id;
-  return tvar;
+  
+  return new Expression(tvar, genInstEmpty());
 }
 
-Variable* Driver::genExprCast(Variable *var, Symtable::Type type) {
+Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
 
   // TODO check if cast is possible
   
   Variable *tvar = getTempVariable(type);
-  return tvar;
+  return new Expression(tvar, genInstEmpty());
 
 }
 
-Variable* Driver::genExprOp(Variable *var1, Variable *var2, Symtable::Operator op) {
+Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Operator op) {
   
   
   // TODO check if operation is possible
@@ -295,8 +262,97 @@ Variable* Driver::genExprOp(Variable *var1, Variable *var2, Symtable::Operator o
   */
 
   Variable *tvar = getTempVariable(Symtable::TINT);
-  return tvar;
+  return new Expression(tvar, genInstEmpty());
 
 }
+
+ExpressionList* Driver::genExprEmpty() {
+
+  return new ExpressionList();;
+}
+
+ExpressionList* Driver::genExprList(Expression *e) {
+  
+  ExpressionList *l = new ExpressionList();
+  l->push_front(e);
+  return l;
+}
+
+ExpressionList* Driver::genExprJoin(Expression *e, ExpressionList *l) {
+  l->push_front(e);
+  return l;
+}
+
+//////////////////////////////////// Driver.generate
+
+InstructionList* Driver::genInstEmpty() {
+  return new InstructionList();
+}
+
+
+InstructionList* Driver::genInstJoin(InstructionList *l1, InstructionList *l2) {
+  l1->splice(l2->end(), *l2);
+  delete l2;
+  return l1;
+}
+
+InstructionList* Driver::genVariables(Symtable::Type type) {
+ 
+  Variable *var = NULL;
+  
+  while (!varList.empty()) {
+    var = varList.front();    
+    var->type = type;
+
+    if (!symtable.insert(var)) {
+      // ERROR
+    }    
+    
+    varList.pop_front();
+  } 
+  
+  return genInstEmpty();
+}
+
+InstructionList* Driver::genAssignment(string *id, Expression *expr) {
+
+  // TODO generate instruction for assignment
+  
+  delete id;
+  return genInstEmpty();
+}
+
+InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
+
+  // TODO generate instruction for calling
+  
+  Variable *var = NULL;
+  
+  while (!varList.empty()) {
+    var = varList.front();    
+    varList.pop_front();
+  }
+  
+  delete id;
+  return genInstEmpty();
+}
+
+InstructionList* Driver::genReturn(Expression *expr) {
+  return genInstEmpty();
+}
+
+InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
+  return genInstEmpty();
+}
+
+
+
+
+
+
+
+
+
+
     
 /* end of file */

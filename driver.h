@@ -32,32 +32,39 @@ class Driver {
   ~Driver();
   
   void addFunction(string *id, Symtable::Type type);
-  void addVariables(Symtable::Type type);
   void addParam(string *id, Symtable::Type type);
   void addType(Symtable::Type type);
   void addId(string *id);
-  void addExpression(Variable *var);
   
   Function* getFunction(string *id);
   Variable* getVariable(string *id);
   Variable* getTempVariable(Symtable::Type type);
 
   void enterFunc(string *id, Symtable::Type type);
+  void leaveFunc(string *id, InstructionList *l);
   void enterBlock();
-  void leaveBlock();
+  void leaveBlock();  
 
-  void genAssignment(string *id, Variable *var);
-  void genCall(string *id);
-  void genReturn(Variable *var);
+  Expression* genExprInt(int ival);
+  Expression* genExprChar(string *sval);
+  Expression* genExprStr(string *sval);
+  Expression* genExprVar(string *id);
+  Expression* genExprFce(string *id);
+  Expression* genExprCast(Expression *expr, Symtable::Type type);
+  Expression* genExprOp(Expression *expr1, Expression *expr2, Symtable::Operator op);  
 
-  Variable* genExprInt(int ival);
-  Variable* genExprChar(string *sval);
-  Variable* genExprStr(string *sval);
+  ExpressionList* genExprEmpty();
+  ExpressionList* genExprList(Expression *e);
+  ExpressionList* genExprJoin(Expression *e, ExpressionList *l);
   
-  Variable* genExprVar(string *id);
-  Variable* genExprFce(string *id);
-  Variable* genExprCast(Variable *var, Symtable::Type type);
-  Variable* genExprOp(Variable *var1, Variable *var2, Symtable::Operator op);  
+
+  InstructionList* genInstEmpty();  
+  InstructionList* genInstJoin(InstructionList *l1, InstructionList *l2);
+  InstructionList* genVariables(Symtable::Type type);
+  InstructionList* genAssignment(string *id, Expression *expr);
+  InstructionList* genCall(string *id, ExpressionList *lexpr);
+  InstructionList* genReturn(Expression *expr);
+  InstructionList* genWhile(Expression *expr, InstructionList *l);
 
 };
 

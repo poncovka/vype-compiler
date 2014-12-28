@@ -176,4 +176,18 @@ Expression::Expression(Variable *var, InstructionList *l) {
 
 }
 
+//////////////////////////////////// Label
+
+int Label::maxlabel = 0;
+
+Label::Label() {
+  std::stringstream stream;
+  stream << "L_" << Label::maxlabel++ << std::endl;
+  this->label = string(stream.str());
+}
+
+Label::Label(const Label &label) {
+  this->label = label.label;
+}
+
 /* end of file */

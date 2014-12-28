@@ -289,10 +289,8 @@ InstructionList* Driver::genInstEmpty() {
   return new InstructionList();
 }
 
-
 InstructionList* Driver::genInstJoin(InstructionList *l1, InstructionList *l2) {
-  l1->splice(l2->end(), *l2);
-  delete l2;
+  l1->splice(l1->end(), *l2);
   return l1;
 }
 
@@ -316,10 +314,22 @@ InstructionList* Driver::genVariables(Symtable::Type type) {
 
 InstructionList* Driver::genAssignment(string *id, Expression *expr) {
 
-  // TODO generate instruction for assignment
+  Variable *var = getVariable(id);
+  
+  if (var == NULL || var->type != expr->var->type) {
+    // ERROR
+  }
+  
+  AssignmentInst *i = new AssignmentInst();
+  i->var = expr->var;
+  i->result = var;
+  
+  InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
+  inst->push_back(i);
   
   delete id;
-  return genInstEmpty();
+  delete expr;
+  return inst;
 }
 
 InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
@@ -345,14 +355,5 @@ InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
   return genInstEmpty();
 }
 
-
-
-
-
-
-
-
-
-
-    
+  
 /* end of file */

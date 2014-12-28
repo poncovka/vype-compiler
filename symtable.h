@@ -13,6 +13,7 @@
 #define _SYMTABLE_H_
 
 #include <string>
+#include <sstream>
 #include <list>
 #include <deque>
 #include <map>
@@ -146,54 +147,67 @@ typedef std::list<Expression*>::iterator ExpressionIter;
 
 //////////////////////////////////// Instructions
 
+
+class Label : public Instruction {
+
+  private:
+  static int maxlabel;
+
+  public:
+    string label;
+    
+  Label();
+  Label(const Label &label);
+};
+
 // result = a op b
-class ExpressionInst : Instruction {
+class ExpressionInst : public Instruction {
   
   public:
-    Variable *a;
-    Variable *b;
+    Variable *var1;
+    Variable *var2;
     Variable *result;
-    int op;
+    Symtable::Operator op;
   
 };
 
 // a = b;
-class AssignmentInst : Instruction {
+class AssignmentInst : public Instruction {
 
   public:
-    Variable *a;
+    Variable *var;
     Variable *result;
 };
 
 // goto a
-class JumpInst : Instruction {
+class JumpInst : public Instruction {
   
   public:
-    InstructionIter jump;
+    Label label;
   
 };
 
-// if a then goto b
-class JumpIfInst : Instruction {
+// if not a then goto b
+class JumpFalseInst : public Instruction {
   
   public:
     Variable *cond;
-    InstructionIter jump;
+    Label label;
   
 };
 
 // a = func(b,c)
-class CallInst : Instruction {
+class CallInst : public Instruction {
   
   public:
     Function *fce;
-    list<Variable*> params;
+    list<Variable*> args;
     Variable *result;
   
 };
 
 // return a
-class ReturnInst : Instruction {
+class ReturnInst : public Instruction {
   
   public:
     Variable *result;

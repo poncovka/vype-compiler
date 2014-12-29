@@ -99,7 +99,7 @@ stmt_list:                                {$$ = driver.genInstEmpty();}
       stmt_list                           {driver.leaveBlock();}
     '}'                                   {$$ = $3;} 
      
-  | stmt stmt_list                        {$$ = driver.genInstJoin($1, $2);} 
+  | stmt stmt_list                        {$$ = driver.genInstJoin($1, $2); delete $2;} 
   ;
 
 stmt:
@@ -114,7 +114,7 @@ stmt:
     ELSE 
     '{'                                   {driver.enterBlock();} 
       stmt_list                           {driver.leaveBlock();} 
-    '}'                                   { /* $$ = driver.genCondition($3, $6, $10); */ } 
+    '}'                                   {$$ = driver.genCondition($3, $7, $13);} 
     
   | WHILE '(' expr ')'                    
     '{'                                   {driver.enterBlock();} 
@@ -129,7 +129,7 @@ expr:
   | CHAR                                  {$$ = driver.genExprChar($1);}
   | STRING                                {$$ = driver.genExprStr($1);} 
   | ID                                    {$$ = driver.genExprVar($1);}
-  | ID '(' argument_list ')'              {$$ = driver.genExprFce($1);}
+  | ID '(' argument_list ')'              {$$ = driver.genExprFce($1, $3);}
   | expr ADD expr                         {$$ = driver.genExprOp($1, $3, Symtable::ADD);}
   | expr SUB expr                         {$$ = driver.genExprOp($1, $3, Symtable::SUB);}
   | expr MUL expr                         {$$ = driver.genExprOp($1, $3, Symtable::MUL);}

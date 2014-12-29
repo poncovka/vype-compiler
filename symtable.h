@@ -140,6 +140,7 @@ class Expression {
     InstructionList inst;
 
     Expression(Variable *var, InstructionList *l);
+    ~Expression();
 };
 
 typedef std::list<Expression*> ExpressionList;
@@ -171,6 +172,23 @@ class ExpressionInst : public Instruction {
   
 };
 
+// result = (type) a
+class CastInst : public Instruction {
+  
+  public:
+    Variable *var;
+    Variable *result;
+    Symtable::Type type;
+  
+};
+
+// a = value
+class LoadInst : public Instruction {
+
+  public:
+    Variable *result;
+};
+
 // a = b;
 class AssignmentInst : public Instruction {
 
@@ -183,7 +201,7 @@ class AssignmentInst : public Instruction {
 class JumpInst : public Instruction {
   
   public:
-    Label label;
+    Label *label;
   
 };
 
@@ -192,7 +210,7 @@ class JumpFalseInst : public Instruction {
   
   public:
     Variable *cond;
-    Label label;
+    Label *label;
   
 };
 

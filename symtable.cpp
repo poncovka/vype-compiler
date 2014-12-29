@@ -64,6 +64,10 @@ Function::Function(string &id, list<Variable*> params, Symtable::Type type) {
 
 Function::~Function() {
 
+  for(InstructionList::iterator i=instructions.begin(); i!=instructions.end(); ++i) {
+    delete *i;
+  }
+
   for(ttablelist::iterator i=variables.begin(); i!=variables.end(); ++i) {
     delete *i;
   }
@@ -174,6 +178,17 @@ Expression::Expression(Variable *var, InstructionList *l) {
   this->var = var;
   this->inst.splice(this->inst.begin(), *l);
 
+}
+
+Expression::~Expression() {
+
+  while(!inst.empty()) {
+
+    Instruction *i = inst.front();
+    inst.pop_front();
+    delete i;
+  
+  }
 }
 
 //////////////////////////////////// Label

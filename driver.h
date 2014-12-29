@@ -49,7 +49,7 @@ class Driver {
   Expression* genExprChar(string *sval);
   Expression* genExprStr(string *sval);
   Expression* genExprVar(string *id);
-  Expression* genExprFce(string *id);
+  Expression* genExprFce(string *id, ExpressionList *lexpr);
   Expression* genExprCast(Expression *expr, Symtable::Type type);
   Expression* genExprOp(Expression *expr1, Expression *expr2, Symtable::Operator op);  
 
@@ -64,6 +64,7 @@ class Driver {
   InstructionList* genCall(string *id, ExpressionList *lexpr);
   InstructionList* genReturn(Expression *expr);
   InstructionList* genWhile(Expression *expr, InstructionList *l);
+  InstructionList* genCondition(Expression *expr, InstructionList *l1, InstructionList *l2);
 
 };
 

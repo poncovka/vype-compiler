@@ -175,7 +175,13 @@ Expression* Driver::genExprInt(int ival) {
   Variable *var = getTempVariable(Symtable::TINT);
   var->ival = ival;
   
-  return new Expression(var, genInstEmpty());
+  LoadInst *i = new LoadInst();
+  i->result = var;
+  
+  InstructionList *inst = new InstructionList();
+  inst->push_back(i);
+   
+  return new Expression(var, inst);
 
 }
 
@@ -183,9 +189,15 @@ Expression* Driver::genExprChar(string *sval) {
 
   Variable *var = getTempVariable(Symtable::TCHAR);
   var->sval = *sval;
-  delete sval;
+
+  LoadInst *i = new LoadInst();
+  i->result = var;
   
-  return new Expression(var, genInstEmpty());
+  InstructionList *inst = new InstructionList();
+  inst->push_back(i);
+   
+  delete sval; 
+  return new Expression(var, inst);
 
 }
 
@@ -193,9 +205,15 @@ Expression* Driver::genExprStr(string *sval) {
 
   Variable *var = getTempVariable(Symtable::TSTRING);
   var->sval = *sval;
-  delete sval;
   
-  return new Expression(var, genInstEmpty());
+  LoadInst *i = new LoadInst();
+  i->result = var;
+  
+  InstructionList *inst = new InstructionList();
+  inst->push_back(i);
+
+  delete sval;   
+  return new Expression(var, inst);
 
 }
   
@@ -207,13 +225,19 @@ Expression* Driver::genExprVar(string *id) {
   }
   
   Variable *tvar = getTempVariable(var->type);
-  delete id;
   
-  return new Expression(tvar, genInstEmpty());
-
+  AssignmentInst *i = new AssignmentInst();
+  i->var = var;
+  i->result = tvar;
+  
+  InstructionList *inst = new InstructionList();
+  inst->push_back(i);
+   
+  delete id; 
+  return new Expression(var, inst);
 }
 
-Expression* Driver::genExprFce(string *id) {
+Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
 
   Function *func = symtable.lookupFunction(*id);
   if (func == NULL) {
@@ -221,48 +245,113 @@ Expression* Driver::genExprFce(string *id) {
   }
   
   Variable *tvar = getTempVariable(func->type);
-  delete id;
+   
+  CallInst *i = new CallInst();
+  i->fce = func;
+  i->result = tvar;
+ 
+  InstructionList *inst = new InstructionList();
   
-  return new Expression(tvar, genInstEmpty());
+    while (!lexpr->empty()) {
+   
+      // add var 
+      i->args.push_back(lexpr->front()->var);
+    
+      // join inst
+      inst = genInstJoin(inst, &lexpr->front()->inst);
+    
+      // pop
+      lexpr->pop_front();
+    }
+  
+  inst->push_back(i);
+  
+  delete id;
+  delete lexpr; 
+   
+  return new Expression(tvar, inst);
 }
 
 Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
 
-  // TODO check if cast is possible
+  bool ctos = (expr->var->type == Symtable::TCHAR && type == Symtable::TSTRING);
+  bool ctoi = (expr->var->type == Symtable::TCHAR && type == Symtable::TINT);
+  bool itoc = (expr->var->type == Symtable::TINT  && type == Symtable::TCHAR);
+  
+  if (!ctos && !ctoi && !itoc) {
+    // ERROR
+  }
   
   Variable *tvar = getTempVariable(type);
-  return new Expression(tvar, genInstEmpty());
-
+  
+  CastInst *i = new CastInst();
+  i->var = expr->var;
+  i->result = tvar;
+  i->type = type;
+  
+  InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
+  inst->push_back(i);
+  
+  delete expr;
+  return new Expression(tvar, inst);
 }
 
 Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Operator op) {
   
+  bool check = false;
   
-  // TODO check if operation is possible
-  
-  /*
   switch(op) {
   
-    case ADD: 
-    case SUB:
-    case MUL:
-    case DIV:
-    case MOD:
-    case LT:
-    case LTE:
-    case GT:
-    case GTE:
-    case EQ:
-    case NEQ:
-    case AND:
-    case OR:
-    case NEG: break;
-    
+    case Symtable::ADD: 
+    case Symtable::SUB:
+    case Symtable::MUL:
+    case Symtable::DIV:
+    case Symtable::MOD: 
+    case Symtable::AND:
+    case Symtable::OR:  check =    expr1->var->type == Symtable::TINT 
+                                && expr2->var->type == Symtable::TINT;
+                        break;
+    case Symtable::LT:
+    case Symtable::LTE:
+    case Symtable::GT:
+    case Symtable::GTE:
+    case Symtable::EQ:  
+    case Symtable::NEQ: check = expr1->var->type == expr2->var->type;
+                        break;
+              
+    case Symtable::NEG: check = expr1->var->type == Symtable::TINT;
+                        break;
   }
-  */
+  
+  if (!check) {
+    // ERROR
+  }
+
 
   Variable *tvar = getTempVariable(Symtable::TINT);
-  return new Expression(tvar, genInstEmpty());
+  
+  ExpressionInst *i = new ExpressionInst();
+  InstructionList *inst = new InstructionList();
+
+  i->var1 = expr1->var;
+  i->result = tvar;
+  i->op = op;
+  
+  inst = genInstJoin(inst, &expr1->inst);
+
+  if (op != Symtable::NEG) {
+    
+    i->var2 = expr2->var;
+    inst = genInstJoin(inst, &expr2->inst);
+    
+  }
+  
+  inst->push_back(i);
+
+  delete expr1;
+  delete expr2;
+  
+  return new Expression(tvar, inst);
 
 }
 
@@ -329,30 +418,119 @@ InstructionList* Driver::genAssignment(string *id, Expression *expr) {
   
   delete id;
   delete expr;
+  
   return inst;
 }
 
 InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
 
-  // TODO generate instruction for calling
+  Function *fce = getFunction(id);
   
-  Variable *var = NULL;
-  
-  while (!varList.empty()) {
-    var = varList.front();    
-    varList.pop_front();
+  if (fce == NULL) {
+    // ERROR
   }
   
+  // TODO check params
+ 
+ CallInst *i = new CallInst();
+ i->fce = fce;
+ i->result = NULL;
+ 
+ InstructionList *inst = new InstructionList();
+  
+  while (!lexpr->empty()) {
+   
+    // add var 
+    i->args.push_back(lexpr->front()->var);
+    
+    // join inst
+    inst = genInstJoin(inst, &lexpr->front()->inst);
+    
+    // pop
+    lexpr->pop_front();
+  }
+  
+  inst->push_back(i);
+  
   delete id;
-  return genInstEmpty();
+  delete lexpr;
+  
+  return inst;
 }
 
 InstructionList* Driver::genReturn(Expression *expr) {
-  return genInstEmpty();
+
+  ReturnInst *i = new ReturnInst();
+  i->result = expr->var;
+  
+  InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
+  inst->push_back(i);
+  
+  delete expr;
+
+  return inst;
 }
 
 InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
-  return genInstEmpty();
+
+  if (expr->var->type != Symtable::TINT) {
+    // ERROR
+  }
+  
+  Label *start = new Label();
+  Label *end = new Label();
+  
+  JumpFalseInst *jumpif = new JumpFalseInst();
+  jumpif->cond = expr->var;
+  jumpif->label = end;
+  
+  JumpInst *jump = new JumpInst(); 
+  jump->label = start;
+  
+  InstructionList *inst = new InstructionList();
+  inst->push_back(start);
+  inst = genInstJoin(inst, &expr->inst);
+  inst->push_back(jumpif);
+  inst = genInstJoin(inst, l);
+  inst->push_back(jump);
+  inst->push_back(end);
+  
+  delete expr;
+  delete l;
+  
+  return inst;
+}
+
+InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, InstructionList *l2) {
+
+  if (expr->var->type != Symtable::TINT) {
+    // ERROR
+  }
+  
+  Label *middle = new Label();
+  Label *end   = new Label();
+  
+  JumpFalseInst *jumpif = new JumpFalseInst();
+  jumpif->cond = expr->var;
+  jumpif->label = middle;
+  
+  JumpInst *jump = new JumpInst(); 
+  jump->label = end;
+  
+  InstructionList *inst = new InstructionList();
+  inst = genInstJoin(inst, &expr->inst);
+  inst->push_back(jumpif);
+  inst = genInstJoin(inst, l1);
+  inst->push_back(jump);
+  inst->push_back(middle);
+  inst = genInstJoin(inst, l2);
+  inst->push_back(end);
+  
+  delete expr;
+  delete l1;
+  delete l2;
+  
+  return inst;
 }
 
   

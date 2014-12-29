@@ -13,22 +13,48 @@
 #include <cstdio>
 #include "parser.tab.hh"
 #include "driver.h"
+#include "error.h"
 
 int main(int argc, char **argv) {
-
-  extern FILE *yyin;
   
-  if (argc >= 2) {
-    if (!(yyin = fopen(argv[1], "r"))) {
-      std::cerr << "cannot open input file: " << argv[1] << std::endl;
-      exit(0);
+  // check params
+  if (argc < 2 || argc > 3) {
+    ERROR(Error::INTERN, "Wrong number of parameters. " << argv[1])
+  }
+  else {
+
+    const char *inname = argv[1];
+    const char *outname = (argc == 3) ? argv[2] : "out.asm";
+  
+    // open input file
+    FILE *in = fopen(inname, "r");
+    
+    if (!in) {
+       ERROR(Error::INTERN, "Cannot open file " << inname << ".")
     }
-  } 
+    else {
+    
+      // parsing
+      Driver driver;
+      driver.parse(in, string(inname));
+      fclose(in);
+      
+      if (!Error::error) {
+      
+        // open output file          
+        FILE *out = fopen(outname, "w");
+        
+        if (!out) {
+          ERROR(Error::INTERN, "Cannot open file " << outname << ".")
+        }
+        else {      
+        
+          // generating
+          fclose(out);
+        } 
+      }    
+    }
+  }
 
-  Driver driver;
-  yy::parser parser(driver);
-  int result = parser.parse();
-
-  return result;
-  
+  return Error::error;
 }

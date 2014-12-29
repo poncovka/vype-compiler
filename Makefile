@@ -7,10 +7,13 @@ CFLAGS = -g
 
 all:	vype
 
-vype:	lexer.o parser.tab.o symtable.o driver.o vype.o
-	c++ -g -o vype vype.o driver.o symtable.o parser.tab.o lexer.o -lm
+vype:	lexer.o parser.tab.o symtable.o driver.o error.o vype.o
+	c++ -g -o vype vype.o error.o driver.o symtable.o parser.tab.o lexer.o -lm
 
-vype.o: vype.cpp parser.tab.hh symtable.h
+vype.o: vype.cpp parser.tab.hh symtable.h error.h
+	c++ -c $<
+
+error.o: error.cpp error.h
 	c++ -c $<
 
 driver.o: driver.cpp driver.h symtable.h

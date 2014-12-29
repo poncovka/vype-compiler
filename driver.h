@@ -15,13 +15,14 @@
 #include <string>
 #include <sstream>
 #include "symtable.h"
+#include "parser.tab.hh"
 
 class Driver {
 
   public:
-  FILE *file;
-  std::string *filename;
+  std::string filename;
   
+  yy::parser parser;
   SymbolTable symtable;
   
   list<Variable*> varList;
@@ -30,6 +31,8 @@ class Driver {
   
   Driver();
   ~Driver();
+  
+  int parse(FILE *f, const string &fname);
   
   void addFunction(string *id, Symtable::Type type);
   void addParam(string *id, Symtable::Type type);

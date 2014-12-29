@@ -13,14 +13,21 @@
 
 //////////////////////////////////// Driver
 
-Driver::Driver() {
+Driver::Driver() : parser(*this) {
 
-  filename = new std::string("filename");
   tempCount = 0;
 }
 
 Driver::~Driver() {
-  delete filename;
+}
+
+int Driver::parse(FILE *f, const string &fname) {
+
+  filename = fname;
+  extern FILE *yyin;
+  yyin = f;
+
+  return parser.parse();
 }
 
 //////////////////////////////////// Driver.add

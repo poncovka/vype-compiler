@@ -8,17 +8,18 @@
 %define parse.error verbose
 
 %code requires{
-  # include "driver.h"
-  # include "symtable.h"
+  #include "symtable.h"
+  class Driver;
 }
 
 %param { Driver& driver }
 
 %{
-# include <iostream>
-# include <cstdio>
-# include "driver.h"
-# include "symtable.h"
+  #include <iostream>
+  #include <cstdio>
+  #include "driver.h"
+  #include "symtable.h"
+  #include "error.h"
 %}
 
 %union {
@@ -66,7 +67,7 @@
 
 %locations
 %initial-action {
- @$.begin.filename = @$.end.filename = driver.filename; /* set proper filename!!! */
+ @$.begin.filename = @$.end.filename = &driver.filename;
 }
 %%
 
@@ -188,7 +189,7 @@ expr_list:
 namespace yy {
   void parser::error(location const &loc, const std::string& s)
   {
-    std::cerr << "error at " << loc << ": " << s << std::endl;
+    ERROR(Error::SYN, s << " at " << loc)
   }
 }
 

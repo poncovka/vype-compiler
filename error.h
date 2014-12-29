@@ -21,7 +21,7 @@ using namespace std;
 
 namespace Error {
 
-  enum Code { EOK = 0, ELEX = 1, ESYN = 2, ESEM = 3, EGEN = 4, EINTERN = 5 };
+  enum Code { OK = 0, LEX = 1, SYN = 2, SEM = 3, GEN = 4, INTERN = 5 };
   
   extern Code error;
   void set(Code code);

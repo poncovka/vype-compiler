@@ -13,10 +13,10 @@
 
 namespace Error {
 
-  Code error = EOK;
+  Code error = Error::OK;
 
   void set(Code code) {
-    if (error == Error::EOK) {
+    if (error == Error::OK) {
       error = code;
     }
   }

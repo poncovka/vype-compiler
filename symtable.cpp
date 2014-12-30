@@ -11,6 +11,19 @@
 
 #include "symtable.h"
 
+
+//////////////////////////////////// Symtable
+
+string Symtable::str(Symtable::Type type) {
+  static const string STR[] = {"void", "int", "char", "string"};
+  return STR[type];
+}
+
+string Symtable::str(Symtable::Operator op) {
+  static const string STR[] = {"+", "-", "*", "/", "%", "<", "<=", ">", ">=", "==", "!=", "&&", "||", "!"};
+  return STR[op];
+}
+
 //////////////////////////////////// Variable
 
 Variable::Variable(Symtable::Type type) {
@@ -22,12 +35,19 @@ Variable::Variable(string &id, Symtable::Type type) {
   this->id = id;
 }
 
+string Variable::str() {
+
+  std::stringstream stream;
+  stream <<  Symtable::str(type) << " " << id;  
+  return stream.str();
+}
+
 //////////////////////////////////// VariableTable
 
 bool VariableTable::insert(Variable *var) {
 
   treturn ret;
-  ret = symbolTable.insert(tpair(var->id, var));
+  ret = symtable.insert(tpair(var->id, var));
   return ret.second;
   
 }
@@ -35,9 +55,9 @@ bool VariableTable::insert(Variable *var) {
 Variable* VariableTable::lookup(string &id) {
 
   tmap::iterator i;
-  i = symbolTable.find(id);
+  i = symtable.find(id);
   
-  if (i == symbolTable.end()) {
+  if (i == symtable.end()) {
     return NULL;
   }
   
@@ -46,7 +66,7 @@ Variable* VariableTable::lookup(string &id) {
 
 VariableTable::~VariableTable() {
 
-  for(tmap::iterator i=symbolTable.begin(); i != symbolTable.end(); ++i) {
+  for(tmap::iterator i=symtable.begin(); i != symtable.end(); ++i) {
     delete i->second;
   }
 }
@@ -107,12 +127,33 @@ bool Function::checkParameters(list<Expression*> expressions) {
   return (i == params.end() && j == expressions.end());
 }
 
+string Function::str() {
+
+  std::stringstream stream;
+  stream <<  Symtable::str(type) << " " << id << "(";
+  
+  bool first = true;
+  for(list<Variable*>::iterator i = params.begin(); i != params.end(); ++i) {
+  
+    if (!first) {
+      stream << ", ";  
+    }
+  
+    stream << (*i)->str();
+    first = false;
+  }
+  
+  stream << ")";
+  
+  return stream.str();
+}
+
 //////////////////////////////////// FunctionTable
 
 bool FunctionTable::insert(Function *func) {
 
   treturn ret;
-  ret = symbolTable.insert(tpair(func->id, func));
+  ret = symtable.insert(tpair(func->id, func));
   return ret.second;
   
 }
@@ -120,9 +161,9 @@ bool FunctionTable::insert(Function *func) {
 Function* FunctionTable::lookup(string &id) {
 
   tmap::iterator i;
-  i = symbolTable.find(id);
+  i = symtable.find(id);
   
-  if (i == symbolTable.end()) {
+  if (i == symtable.end()) {
     return NULL;
   }
   
@@ -131,7 +172,7 @@ Function* FunctionTable::lookup(string &id) {
 
 FunctionTable::~FunctionTable() {
 
-  for(tmap::iterator i=symbolTable.begin(); i != symbolTable.end(); ++i) {
+  for(tmap::iterator i=symtable.begin(); i != symtable.end(); ++i) {
     delete i->second;
   }
 
@@ -150,7 +191,7 @@ SymbolTable::~SymbolTable() {
 
 
 bool SymbolTable::insert(Function *func) {
-  return functionTable.insert(func);
+  return functions.insert(func);
 }
 
 
@@ -162,7 +203,7 @@ bool SymbolTable::insert(Variable *var) {
 }
 
 Function* SymbolTable::lookupFunction(string &id) {
-  return functionTable.lookup(id);
+  return functions.lookup(id);
 }
 
 Variable* SymbolTable::lookupVariable(string &id) {
@@ -215,71 +256,93 @@ Expression::~Expression() {
   freeInstructions(inst);
 }
 
-//////////////////////////////////// Label
+//////////////////////////////////// Instructions
 
-int Label::maxlabel = 0;
+int Label::maxid = 0;
 
 Label::Label() {
   std::stringstream stream;
-  stream << "L" << Label::maxlabel++ ;
-  this->label = string(stream.str());
+  stream << "L" << Label::maxid++ ;
+  this->id = string(stream.str());
 }
 
 Label::Label(const Label &label) {
-  this->label = label.label;
+  this->id = label.id;
 }
 
-//////////////////////////////////// streaming
-
-std::ostream& operator<< (std::ostream& os, const Variable& v) {
-  os << v.id;
-  return os;
+string Label::str() {
+  std::stringstream stream;
+  stream << "label " << id;
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const Label& i) {
-  os << "label " << i.label;
-  return os;
+string ExpressionInst::str() {
+  std::stringstream stream;
+  
+  if (op == Symtable::NEG) {
+    stream << result->id << " = " << Symtable::str(op) << " " << var1->id;
+  }
+  else {
+    stream << result->id << " = " << var1->id << " " << Symtable::str(op) << " " << var2->id;
+  }
+  
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const ExpressionInst& i) {
-  os << *i.result << " = " << *i.var1 << " op(" << i.op << ") " << *i.var2;
-  return os;
+string CastInst::str() {
+  std::stringstream stream;
+  stream << result->id << " = (" << Symtable::str(type) << ") " << var->id;
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const CastInst& i) {
-  os << *i.result << " = " << "(" << i.type << ") " << *i.var;
-  return os;
+string LoadInst::str() {
+  std::stringstream stream;
+  stream << result->id << " = " << Symtable::str(result->type);
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const LoadInst& i) {
-  os << *i.result << " = value";
-  return os;
+string AssignmentInst::str() {
+  std::stringstream stream;
+  stream << result->id << " = " << var->id;
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const AssignmentInst& i) {
-  os << *i.result << " = " << *i.var ;
-  return os;
+string JumpInst::str() {
+  std::stringstream stream;
+  stream << "jump to " << label->id;
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const JumpInst& i) {
-  os << "goto " << *i.label ;
-  return os;
+string JumpFalseInst::str() {
+  std::stringstream stream;
+  stream << "if not " << cond->id << " jump to " << label->id;
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const JumpFalseInst& i) {
-  os << "if not " << *i.cond << " goto " << *i.label ;
-  return os;
-
+string CallInst::str() {
+  std::stringstream stream;
+  stream << result->id << " = " << fce->id << "(";
+  
+  bool first = true;
+  for (list<Variable*>::iterator i = args.begin(); i != args.end(); ++i) {
+    
+    if (!first) {
+      stream << ", ";
+    }
+    
+    stream << (*i)->id;
+    first = false;
+  }
+  
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const CallInst& i) {
-  os << *i.result << " = " << i.fce->id << "()";
-  return os;
+string ReturnInst::str() {
+  std::stringstream stream;
+  stream << "return " << result->id;
+  return stream.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const ReturnInst& i) {
-  os << "return " << *i.result;
-}
 
 //////////////////////////////////// free
 

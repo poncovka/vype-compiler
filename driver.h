@@ -70,6 +70,8 @@ class Driver {
   InstructionList* genWhile(Expression *expr, InstructionList *l);
   InstructionList* genCondition(Expression *expr, InstructionList *l1, InstructionList *l2);
 
+  void debug();
+
 };
 
 #endif

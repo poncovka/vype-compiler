@@ -23,15 +23,18 @@ using namespace std;
 
 //////////////////////////////////// Enums
 
-struct Symtable {
-  enum Type { VOID, TINT, TCHAR, TSTRING };
-  enum Operator { ADD, SUB, MUL, DIV, MOD, LT, LTE, GT, GTE, EQ, NEQ, AND, OR, NEG };
-};
+namespace Symtable {
 
+  enum Type { VOID, TINT, TCHAR, TSTRING };  
+  enum Operator { ADD, SUB, MUL, DIV, MOD, LT, LTE, GT, GTE, EQ, NEQ, AND, OR, NEG };
+
+  string str(Type type);
+  string str(Operator op);
+}
 
 //////////////////////////////////// Inst
 
-class Instruction {};
+class Instruction;
 typedef std::list<Instruction*> InstructionList;
 typedef std::list<Instruction*>::iterator InstructionIter;
 
@@ -48,6 +51,7 @@ public:
 
   Variable(Symtable::Type type);
   Variable(string &id, Symtable::Type type);
+  string str();
   
 };
 
@@ -58,7 +62,7 @@ class VariableTable {
   typedef pair<tmap::iterator, bool> treturn;
 
 public:
-  tmap symbolTable;
+  tmap symtable;
   
   ~VariableTable();
   bool insert(Variable *var);
@@ -103,6 +107,8 @@ public:
   VariableTable* createVariableTable();
   bool checkParameters(list<Variable*> variables);
   bool checkParameters(list<Expression*> expressions);
+  string str();
+  
 };
 
 class FunctionTable {
@@ -113,7 +119,7 @@ class FunctionTable {
 
 
 public:
-  tmap symbolTable;
+  tmap symtable;
   
   ~FunctionTable();
   bool insert(Function *func);
@@ -129,7 +135,7 @@ class SymbolTable {
 
   public:
   Function *main;
-  FunctionTable functionTable;
+  FunctionTable functions;
   
   Function *actualFunction;
   tstack stack;
@@ -151,14 +157,20 @@ class SymbolTable {
 
 //////////////////////////////////// Instructions
 
+class Instruction {
+  public:
+  virtual string str() = 0;
+};
+
 
 class Label : public Instruction {
 
   private:
-  static int maxlabel;
+  static int maxid;
 
   public:
-    string label;
+  string id;
+  string str();
     
   Label();
   Label(const Label &label);
@@ -168,20 +180,21 @@ class Label : public Instruction {
 class ExpressionInst : public Instruction {
   
   public:
-    Variable *var1;
-    Variable *var2;
-    Variable *result;
-    Symtable::Operator op;
-  
+  Variable *var1;
+  Variable *var2;
+  Variable *result;
+  Symtable::Operator op;
+  string str();
 };
 
 // result = (type) a
 class CastInst : public Instruction {
   
   public:
-    Variable *var;
-    Variable *result;
-    Symtable::Type type;
+  Variable *var;
+  Variable *result;
+  Symtable::Type type;
+  string str();
   
 };
 
@@ -189,22 +202,26 @@ class CastInst : public Instruction {
 class LoadInst : public Instruction {
 
   public:
-    Variable *result;
+  Variable *result;
+  string str();
+  
 };
 
 // a = b;
 class AssignmentInst : public Instruction {
 
   public:
-    Variable *var;
-    Variable *result;
+  Variable *var;
+  Variable *result;
+  string str();
 };
 
 // goto a
 class JumpInst : public Instruction {
   
   public:
-    Label *label;
+  Label *label;
+  string str();
   
 };
 
@@ -212,8 +229,9 @@ class JumpInst : public Instruction {
 class JumpFalseInst : public Instruction {
   
   public:
-    Variable *cond;
-    Label *label;
+  Variable *cond;
+  Label *label;
+  string str();
   
 };
 
@@ -221,9 +239,10 @@ class JumpFalseInst : public Instruction {
 class CallInst : public Instruction {
   
   public:
-    Function *fce;
-    list<Variable*> args;
-    Variable *result;
+  Function *fce;
+  list<Variable*> args;
+  Variable *result;
+  string str();
   
 };
 
@@ -231,21 +250,10 @@ class CallInst : public Instruction {
 class ReturnInst : public Instruction {
   
   public:
-    Variable *result;
+  Variable *result;
+  string str();
   
 };
-
-//////////////////////////////////// streaming
-
-std::ostream& operator<< (std::ostream&, const Label&);
-std::ostream& operator<< (std::ostream&, const ExpressionInst&);
-std::ostream& operator<< (std::ostream&, const CastInst&);
-std::ostream& operator<< (std::ostream&, const LoadInst&);
-std::ostream& operator<< (std::ostream&, const AssignmentInst&);
-std::ostream& operator<< (std::ostream&, const JumpInst&);
-std::ostream& operator<< (std::ostream&, const JumpFalseInst&);
-std::ostream& operator<< (std::ostream&, const CallInst&);
-std::ostream& operator<< (std::ostream&, const ReturnInst&);
 
 //////////////////////////////////// free
 

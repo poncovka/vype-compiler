@@ -28,6 +28,8 @@ void Driver::parse(FILE *f, const string &fname) {
 
   parser.parse();
   
+  IFDEBUG(debug())
+  
   // TODO check main function
   // TODO check if all functions are declared
 }
@@ -202,8 +204,6 @@ Expression* Driver::genExprInt(int ival) {
   InstructionList *inst = new InstructionList();
   inst->push_back(i);
   
-  DEBUG("Generate instr " << *i)
-  
   // create expr
   return new Expression(var, inst);
 
@@ -221,8 +221,6 @@ Expression* Driver::genExprChar(string *sval) {
   
   InstructionList *inst = new InstructionList();
   inst->push_back(i);
-
-  DEBUG("Generate instr " << *i)
 
   // create expr  
   delete sval;   
@@ -242,8 +240,6 @@ Expression* Driver::genExprStr(string *sval) {
   
   InstructionList *inst = new InstructionList();
   inst->push_back(i);
-  
-  DEBUG("Generate instr " << *i) 
   
   // create expr
   delete sval;  
@@ -282,7 +278,6 @@ Expression* Driver::genExprVar(string *id) {
     
     // create expr
     expr = new Expression(var, inst);
-    DEBUG("Generate instr " << *i)    
   }
   
   delete id; 
@@ -329,7 +324,6 @@ Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
     }
   
     inst->push_back(i);
-    DEBUG("Generate instr " << *i)
     
     // create expr
     expr = new Expression(tvar, inst);
@@ -366,8 +360,6 @@ Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
   
   InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
   inst->push_back(i);
-  
-  DEBUG("Generate instr " << *i)
   
   // create expr
   result = new Expression(tvar, inst);
@@ -431,7 +423,6 @@ Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Op
   }
   
   inst->push_back(i);
-  DEBUG("Generate instr " << *i)
 
   // create expr  
   result = new Expression(tvar, inst);
@@ -507,7 +498,6 @@ InstructionList* Driver::genAssignment(string *id, Expression *expr) {
     inst = genInstJoin(new InstructionList(), &expr->inst);
     inst->push_back(i);
     
-    DEBUG("Generate instr " << *i)
   }
   
   delete id;
@@ -546,7 +536,6 @@ InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
     }
   
     inst->push_back(i);  
-    DEBUG("Generate instr " << *i)
   }
   
   freeExpressions(*lexpr);
@@ -569,7 +558,6 @@ InstructionList* Driver::genReturn(Expression *expr) {
   
     inst = genInstJoin(inst, &expr->inst);
     inst->push_back(i);
-    DEBUG("Generate instr " << *i)
   }
   
   delete expr;
@@ -600,11 +588,6 @@ InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
     inst = genInstJoin(inst, l);
     inst->push_back(jump);
     inst->push_back(end);   
-    
-    DEBUG("Generate instr " << *start)
-    DEBUG("Generate instr " << *jumpif)
-    DEBUG("Generate instr " << *jump)
-    DEBUG("Generate instr " << *end)
   }
   
   freeInstructions(*l);
@@ -640,10 +623,6 @@ InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, Ins
     inst = genInstJoin(inst, l2);
     inst->push_back(end);
     
-    DEBUG("Generate instr " << *jumpif)
-    DEBUG("Generate instr " << *jump)
-    DEBUG("Generate instr " << *middle)
-    DEBUG("Generate instr " << *end)
   }
   
   freeInstructions(*l1);
@@ -655,5 +634,37 @@ InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, Ins
   return inst;
 }
 
+//////////////////////////////////// Driver.debug
+
+void Driver::debug() {
   
+  FunctionTable &functions = symtable.functions;
+  
+  for (map<string, Function*>::iterator i = functions.symtable.begin(); i != functions.symtable.end(); ++i) {
+  
+    Function &f = *(i->second);  
+    std::cerr << "FUNCTION " << f.str() << std::endl << std::endl;
+    
+    for (list<VariableTable*>::iterator j = f.variables.begin(); j != f.variables.end(); ++j) {
+    
+      VariableTable &variables = **j;
+      std::cerr << "VARIABLES block" << std::distance(f.variables.begin(), j) << std::endl;   
+
+      for (map<string, Variable*>::iterator k = variables.symtable.begin(); k != variables.symtable.end(); ++k) {
+      
+        Variable &v = *(k->second);
+        std::cerr << v.str() << std::endl;        
+      } 
+      std::cerr << std::endl;
+    }
+    
+    std::cerr << "INSTRUCTIONS " << std::endl;
+    for (list<Instruction*>::iterator l = f.instructions.begin(); l != f.instructions.end(); ++l) {
+      std::cerr << (*l)->str()  << std::endl;
+    }
+    std::cerr << std::endl;
+  }
+  std::cerr << std::endl;
+}
+
 /* end of file */

@@ -330,7 +330,12 @@ string JumpFalseInst::str() {
 
 string CallInst::str() {
   std::stringstream stream;
-  stream << result->id << " = " << fce->id << "(";
+  
+  if (result) {
+    stream << result->id << " = " ;
+  }
+  
+  stream << fce->id << "(";
   
   bool first = true;
   for (list<Variable*>::iterator i = args.begin(); i != args.end(); ++i) {

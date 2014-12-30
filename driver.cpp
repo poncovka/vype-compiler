@@ -291,52 +291,24 @@ Expression* Driver::genExprVar(string *id) {
 Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
 
   Expression *expr = new Expression();
-  
-  // check func
   Function *func = symtable.lookupFunction(*id);
   
   if (func == NULL) {
-  
-    // function is not defined
-    ERROR(Error::SEM, "Function " << *id << " is not defined.")
-        
-    // try to guess the type
-    Variable *tvar = getTempVariable(Symtable::TINT);    
-    expr->var = tvar;
+    expr->var = getTempVariable(Symtable::TINT);    
   }
   else {
-  
-    // create temp
-    Variable *tvar = getTempVariable(func->type);
-   
-    // create inst
-    CallInst *i = new CallInst();
-    i->fce = func;
-    i->result = tvar;
-  
-    // create expr
-    expr->var = tvar;
-  
-    while (!lexpr->empty()) {
-   
-      Expression *arg = lexpr->front();
-   
-      // add var 
-      i->args.push_back(arg->var);
-    
-      // join inst
-      genInstJoin(&expr->inst, &arg->inst);
-    
-      // pop
-      lexpr->pop_front();
-    }
-  
-    expr->inst.push_back(i);
+    expr->var = getTempVariable(func->type);
   }
   
-  freeExpressions(*lexpr);
-  delete lexpr; 
-  delete id;
+  InstructionList* inst = genCall(id, lexpr);
+  
+  if (!inst->empty()) {
+    CallInst *i = (CallInst*) inst->back();
+    i->result = expr->var;
+  }
+  
+  genInstJoin(&expr->inst, inst);
+  delete inst;
   return expr;
 }
 
@@ -439,7 +411,6 @@ ExpressionList* Driver::genExprEmpty() {
 }
 
 ExpressionList* Driver::genExprList(Expression *e) {
-  
   ExpressionList *l = new ExpressionList();
   l->push_front(e);
   return l;
@@ -523,16 +494,15 @@ InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
     i->fce = fce;
     i->result = NULL;
   
-    while (!lexpr->empty()) {
-   
-      // add var 
-      i->args.push_back(lexpr->front()->var);
+    for (ExpressionList::iterator ie = lexpr->begin(); ie != lexpr->end(); ++ie) {
+    
+      Expression *e = *ie;
+      
+       // add var 
+      i->args.push_back(e->var);
     
       // join inst
-      inst = genInstJoin(inst, &lexpr->front()->inst);
-    
-      // pop
-      lexpr->pop_front();
+      genInstJoin(inst, &e->inst); 
     }
   
     inst->push_back(i);  

@@ -78,6 +78,7 @@ class Expression {
     Variable *var;
     InstructionList inst;
 
+    Expression();
     Expression(Variable *var, InstructionList *l);
     ~Expression();
 };
@@ -105,9 +106,12 @@ public:
   ~Function();
   
   VariableTable* createVariableTable();
+  
   bool checkParameters(list<Variable*> variables);
   bool checkParameters(list<Expression*> expressions);
+  
   string str();
+  void clear();
   
 };
 
@@ -158,10 +162,12 @@ class SymbolTable {
 //////////////////////////////////// Instructions
 
 class Instruction {
+
   public:
   virtual string str() = 0;
+  virtual ~Instruction() {};
+  
 };
-
 
 class Label : public Instruction {
 
@@ -244,6 +250,7 @@ class CallInst : public Instruction {
   Variable *result;
   string str();
   
+  ~CallInst();
 };
 
 // return a

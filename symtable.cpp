@@ -83,14 +83,7 @@ Function::Function(string &id, list<Variable*> params, Symtable::Type type, bool
 }
 
 Function::~Function() {
-
-  if (!isdef) {
-    freeVariables(params);
-  }
-  
-  freeInstructions(instructions);
-  freeVariableTables(variables);
-  
+  clear();
 }
 
 VariableTable* Function::createVariableTable() {
@@ -146,6 +139,18 @@ string Function::str() {
   stream << ")";
   
   return stream.str();
+}
+
+void Function::clear() {
+
+  if (!isdef) {
+    freeVariables(params);
+  }
+  
+  params.clear();
+  freeInstructions(instructions);
+  freeVariableTables(variables);
+  
 }
 
 //////////////////////////////////// FunctionTable
@@ -245,6 +250,10 @@ void SymbolTable::leaveBlock() {
 
 //////////////////////////////////// Expression
 
+Expression::Expression() {
+  this->var = NULL;
+}
+
 Expression::Expression(Variable *var, InstructionList *l) {
 
   this->var = var;
@@ -263,7 +272,7 @@ int Label::maxid = 0;
 Label::Label() {
   std::stringstream stream;
   stream << "L" << Label::maxid++ ;
-  this->id = string(stream.str());
+  stream.str(this->id);
 }
 
 Label::Label(const Label &label) {
@@ -334,7 +343,12 @@ string CallInst::str() {
     first = false;
   }
   
+  stream << ")";
   return stream.str();
+}
+
+CallInst::~CallInst() {
+  args.clear();
 }
 
 string ReturnInst::str() {

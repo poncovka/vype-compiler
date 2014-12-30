@@ -66,6 +66,21 @@ public:
 
 };
 
+//////////////////////////////////// Expression
+
+class Expression {
+
+  public:
+    Variable *var;
+    InstructionList inst;
+
+    Expression(Variable *var, InstructionList *l);
+    ~Expression();
+};
+
+typedef std::list<Expression*> ExpressionList;
+typedef std::list<Expression*>::iterator ExpressionIter;
+
 //////////////////////////////////// Function
 
 class Function {
@@ -85,7 +100,8 @@ public:
   ~Function();
   
   VariableTable* createVariableTable();
-
+  bool checkParameters(list<Variable*> variables);
+  bool checkParameters(list<Expression*> expressions);
 };
 
 class FunctionTable {
@@ -118,6 +134,7 @@ class SymbolTable {
   tstack stack;
 
   SymbolTable();
+  ~SymbolTable();
   
   Variable* lookupVariable(string &id);
   Function* lookupFunction(string &id);
@@ -130,21 +147,6 @@ class SymbolTable {
   void leaveBlock();
 
 };
-
-//////////////////////////////////// Expression
-
-class Expression {
-
-  public:
-    Variable *var;
-    InstructionList inst;
-
-    Expression(Variable *var, InstructionList *l);
-    ~Expression();
-};
-
-typedef std::list<Expression*> ExpressionList;
-typedef std::list<Expression*>::iterator ExpressionIter;
 
 //////////////////////////////////// Instructions
 
@@ -232,5 +234,23 @@ class ReturnInst : public Instruction {
   
 };
 
+//////////////////////////////////// streaming
+
+std::ostream& operator<< (std::ostream&, const Label&);
+std::ostream& operator<< (std::ostream&, const ExpressionInst&);
+std::ostream& operator<< (std::ostream&, const CastInst&);
+std::ostream& operator<< (std::ostream&, const LoadInst&);
+std::ostream& operator<< (std::ostream&, const AssignmentInst&);
+std::ostream& operator<< (std::ostream&, const JumpInst&);
+std::ostream& operator<< (std::ostream&, const JumpFalseInst&);
+std::ostream& operator<< (std::ostream&, const CallInst&);
+std::ostream& operator<< (std::ostream&, const ReturnInst&);
+
+//////////////////////////////////// free
+
+void freeVariables(list<Variable*> &l);
+void freeVariableTables(list<VariableTable*> &l);
+void freeExpressions(list<Expression*> &l);
+void freeInstructions(list<Instruction*> &l);
 
 #endif

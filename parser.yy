@@ -187,9 +187,14 @@ expr_list:
 %%
 
 namespace yy {
-  void parser::error(location const &loc, const std::string& s)
-  {
-    ERROR(Error::SYN, s << " at " << loc)
+
+  void parser::error(location const &loc, const string& msg) {
+  
+    if (!msg.empty()) {
+      driver.errorSyn(loc, msg);
+    }
+    
   }
+  
 }
 

@@ -14,6 +14,7 @@
 
 #include <string>
 #include <sstream>
+#include "error.h"
 #include "symtable.h"
 #include "parser.tab.hh"
 
@@ -25,8 +26,7 @@ class Driver {
   yy::parser parser;
   SymbolTable symtable;
   
-  list<Variable*> varList;
-  InstructionList instList;
+  list<Variable*> variables;
   int tempCount;
   
   Driver();
@@ -34,13 +34,15 @@ class Driver {
   
   int parse(FILE *f, const string &fname);
   
+  void errorLex(yy::location const &loc, const string &msg);
+  void errorSyn(yy::location const &loc, const string &msg);
+  void throwError();
+  
   void addFunction(string *id, Symtable::Type type);
   void addParam(string *id, Symtable::Type type);
   void addType(Symtable::Type type);
   void addId(string *id);
-  
-  Function* getFunction(string *id);
-  Variable* getVariable(string *id);
+
   Variable* getTempVariable(Symtable::Type type);
 
   void enterFunc(string *id, Symtable::Type type);

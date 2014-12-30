@@ -16,7 +16,7 @@
 #include <iostream>
 using namespace std;
 
-#define ERROR(code, args...) std::cerr << "ERROR[" << code << "]: " << args << std::endl; Error::set(code); 
+#define ERROR(code, args...) std::cerr << "ERROR: " << args << std::endl; Error::set(code); 
 #define DEBUG(args...)       std::cerr << "DEBUG: " << args << std::endl;
 
 namespace Error {

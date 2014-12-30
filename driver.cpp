@@ -30,69 +30,70 @@ int Driver::parse(FILE *f, const string &fname) {
   return parser.parse();
 }
 
+void Driver::errorLex(yy::location const &loc, const string &msg) {
+
+  ERROR(Error::LEX, "lexical error, " << msg << " at " << loc)
+  throwError();
+}
+
+void Driver::errorSyn(yy::location const &loc, const string &msg) {
+
+  ERROR(Error::SYN, msg << " at " << loc)
+  throwError();
+}
+
+void Driver::throwError() {
+  parser.error(yy::location(), "");
+}
+
 //////////////////////////////////// Driver.add
 
 void Driver::addFunction(string *id, Symtable::Type type) {
   
-  Function *func = new Function(*id, varList, type);
+  Function *func = new Function(*id, variables, type);
+  
   if (!symtable.insert(func)) {
-    // ERROR
+    ERROR(Error::SEM, "Function " << *id << " already exists.")
+    throwError();
+    delete func;
   }
   
+  DEBUG("Created function " << *id)
   delete id;
+  freeVariables(variables);
 }
 
 void Driver::addParam(string *id, Symtable::Type type) {
   Variable *var = new Variable(*id, type);
-  varList.push_back(var);
+  variables.push_back(var);
   
   delete id;
 }
   
 void Driver::addType(Symtable::Type type) {
   Variable *var = new Variable(type);
-  varList.push_back(var);
+  variables.push_back(var);
 }
 
 void Driver::addId(string *id) {
   Variable *var = new Variable(*id, Symtable::VOID);
-  varList.push_back(var);
+  variables.push_back(var);
   
   delete id;
 }
 
 //////////////////////////////////// Driver.get
 
-Function* Driver::getFunction(string *id) {
-    
-  Function *func = symtable.lookupFunction(*id);
-  if (func == NULL) {
-    // ERROR
-  }
-  delete id;  
-  return func;
-}
-
-Variable* Driver::getVariable(string *id) {
-  
-  Variable *var = symtable.lookupVariable(*id);
-  if (var == NULL) {
-    // ERROR
-  }
-  delete id;  
-  return var;
-}
-
 Variable* Driver::getTempVariable(Symtable::Type type) {
   
   std::stringstream stream;
-  stream << "_temp" << tempCount++ << endl;
+  stream << "~temp" << tempCount++;
   string *id = new string(stream.str());
-  
   Variable *var = new Variable(*id, type);
-  if (!symtable.insert(var)) {
-    // ERROR
-  }
+  
+  symtable.insert(var);
+  
+  DEBUG("Created temp variable " << *id)
   
   delete id;
   return var;
@@ -108,41 +109,27 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
   if (func != NULL) {
   
     if (func->type != type) {
-      // ERROR
-    }
-  
-    Variable *var = NULL;
-    for(list<Variable*>::iterator i=varList.begin(); i!=varList.end(); ++i) {
-    
-      if (func->params.empty()) {
-        // ERROR
-        break;
-      }
-      
-      var = func->params.front();    
-      if (var->type != (*i)->type) {
-        // ERROR
-      }
-      
-      func->params.pop_front();
+      ERROR(Error::SEM, "Function " << *id << " has different return type.")
+      throwError();
     }
     
-    if (!func->params.empty()) {
-      //ERROR
-    }
-    
-    func->params.splice(func->params.begin(), varList);
+    if (!func->checkParameters(variables)) {
+      ERROR(Error::SEM, "Function " << *id << " has different parameters types.")
+      throwError();
+   }
+   freeVariables(func->params);
+   func->params.splice(func->params.begin(), variables);
+
   }
 
   // function was not declared, add the function  
   else {  
-
-    func = new Function(*id, varList, type);
-    if (!symtable.insert(func)) {
-      // ERROR
-    }
-  }
+    func = new Function(*id, variables, type);
+    symtable.insert(func);
     
+    DEBUG("Created new function " << *id)
+  }
+  
   // enter block
   symtable.enterBlock(func);
    
@@ -150,9 +137,13 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
   for (list<Variable*>::iterator i = func->params.begin(); i != func->params.end(); ++i) {
     
     if (!symtable.insert(*i)) {
-      // ERROR
+      // TODO check params before !!!
+      ERROR(Error::SEM, "Function parameter " << (*i)->id << " already exists.")
+      throwError();
     }
-  }
+  }    
+  
+  freeVariables(variables);
 }
 
 void Driver::leaveFunc(string *id, InstructionList *l) {
@@ -162,6 +153,7 @@ void Driver::leaveFunc(string *id, InstructionList *l) {
   
   symtable.leaveBlock();
   
+  freeInstructions(*l);
   delete l;
   delete id;
 }
@@ -179,85 +171,132 @@ void Driver::leaveBlock() {
 
 Expression* Driver::genExprInt(int ival) {
 
+  // create var
   Variable *var = getTempVariable(Symtable::TINT);
   var->ival = ival;
   
+  // create inst
   LoadInst *i = new LoadInst();
   i->result = var;
   
   InstructionList *inst = new InstructionList();
   inst->push_back(i);
-   
+  
+  DEBUG("Generate instr " << *i)
+  
+  // create expr
   return new Expression(var, inst);
 
 }
 
 Expression* Driver::genExprChar(string *sval) {
 
+  // create var
   Variable *var = getTempVariable(Symtable::TCHAR);
   var->sval = *sval;
 
+  // create inst
   LoadInst *i = new LoadInst();
   i->result = var;
   
   InstructionList *inst = new InstructionList();
   inst->push_back(i);
-   
-  delete sval; 
+
+  DEBUG("Generate instr " << *i)
+
+  // create expr  
+  delete sval;   
   return new Expression(var, inst);
 
 }
 
 Expression* Driver::genExprStr(string *sval) {
 
+  // create temp
   Variable *var = getTempVariable(Symtable::TSTRING);
   var->sval = *sval;
   
+  // create inst
   LoadInst *i = new LoadInst();
   i->result = var;
   
   InstructionList *inst = new InstructionList();
   inst->push_back(i);
-
-  delete sval;   
+  
+  DEBUG("Generate instr " << *i) 
+  
+  // create expr
+  delete sval;  
   return new Expression(var, inst);
-
 }
   
 Expression* Driver::genExprVar(string *id) {
 
+  Expression *expr = NULL;
+  InstructionList *inst = new InstructionList();
+  
+  // check var
   Variable *var = symtable.lookupVariable(*id);
+  
   if (var == NULL) {
-    // ERROR
+  
+    // variable is not defined
+    ERROR(Error::SEM, "Variable " << *id << " is not defined.")
+    throwError();
+    
+    // try to guess the type
+    Variable *tvar = getTempVariable(Symtable::TINT);    
+    expr = new Expression(tvar, inst);
+    
+  }
+  else {
+    // create temp
+    Variable *tvar = getTempVariable(var->type);
+  
+    // create inst
+    AssignmentInst *i = new AssignmentInst();
+    i->var = var;
+    i->result = tvar;
+  
+    InstructionList *inst = new InstructionList();
+    inst->push_back(i);
+    
+    // create expr
+    expr = new Expression(var, inst);
+    DEBUG("Generate instr " << *i)    
   }
   
-  Variable *tvar = getTempVariable(var->type);
-  
-  AssignmentInst *i = new AssignmentInst();
-  i->var = var;
-  i->result = tvar;
-  
-  InstructionList *inst = new InstructionList();
-  inst->push_back(i);
-   
   delete id; 
-  return new Expression(var, inst);
+  return expr;
 }
 
 Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
 
-  Function *func = symtable.lookupFunction(*id);
-  if (func == NULL) {
-    // ERROR
-  }
-  
-  Variable *tvar = getTempVariable(func->type);
-   
-  CallInst *i = new CallInst();
-  i->fce = func;
-  i->result = tvar;
- 
+  Expression *expr = NULL;
   InstructionList *inst = new InstructionList();
+  
+  // check func
+  Function *func = symtable.lookupFunction(*id);
+  
+  if (func == NULL) {
+  
+    // function is not defined
+    ERROR(Error::SEM, "Function " << *id << " is not defined.")
+    throwError();
+    
+    // try to guess the type
+    Variable *tvar = getTempVariable(Symtable::TINT);    
+    expr = new Expression(tvar, inst);
+  }
+  else {
+  
+    // create temp
+    Variable *tvar = getTempVariable(func->type);
+   
+    // create inst
+    CallInst *i = new CallInst();
+    i->fce = func;
+    i->result = tvar;
   
     while (!lexpr->empty()) {
    
@@ -271,26 +310,38 @@ Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
       lexpr->pop_front();
     }
   
-  inst->push_back(i);
+    inst->push_back(i);
+    DEBUG("Generate instr " << *i)
+    
+    // create expr
+    expr = new Expression(tvar, inst);
+  }
   
-  delete id;
+  freeExpressions(*lexpr);
   delete lexpr; 
+  delete id;
    
-  return new Expression(tvar, inst);
+  return expr;
 }
 
 Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
 
+  Expression *result = NULL;
+  
+  // check cast 
   bool ctos = (expr->var->type == Symtable::TCHAR && type == Symtable::TSTRING);
   bool ctoi = (expr->var->type == Symtable::TCHAR && type == Symtable::TINT);
   bool itoc = (expr->var->type == Symtable::TINT  && type == Symtable::TCHAR);
   
   if (!ctos && !ctoi && !itoc) {
-    // ERROR
+    ERROR(Error::SEM, "Impossible cast operation.")
+    throwError();
   }
-  
+
+  // create temp
   Variable *tvar = getTempVariable(type);
   
+  // create inst
   CastInst *i = new CastInst();
   i->var = expr->var;
   i->result = tvar;
@@ -299,12 +350,20 @@ Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
   InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
   inst->push_back(i);
   
+  DEBUG("Generate instr " << *i)
+  
+  // create expr
+  result = new Expression(tvar, inst);
+  
   delete expr;
-  return new Expression(tvar, inst);
+  return result;
 }
 
 Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Operator op) {
   
+  Expression *result = NULL;
+  
+  // check operands
   bool check = false;
   
   switch(op) {
@@ -331,12 +390,14 @@ Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Op
   }
   
   if (!check) {
-    // ERROR
+    ERROR(Error::SEM, "Wrong types of operands.")
+    throwError();
   }
 
-
+  // create temp
   Variable *tvar = getTempVariable(Symtable::TINT);
   
+  // create inst
   ExpressionInst *i = new ExpressionInst();
   InstructionList *inst = new InstructionList();
 
@@ -354,17 +415,19 @@ Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Op
   }
   
   inst->push_back(i);
+  DEBUG("Generate instr " << *i)
+
+  // create expr  
+  result = new Expression(tvar, inst);
 
   delete expr1;
   delete expr2;
   
-  return new Expression(tvar, inst);
-
+  return result;
 }
 
 ExpressionList* Driver::genExprEmpty() {
-
-  return new ExpressionList();;
+  return new ExpressionList();
 }
 
 ExpressionList* Driver::genExprList(Expression *e) {
@@ -394,34 +457,46 @@ InstructionList* Driver::genVariables(Symtable::Type type) {
  
   Variable *var = NULL;
   
-  while (!varList.empty()) {
-    var = varList.front();    
+  while (!variables.empty()) {
+    var = variables.front();    
     var->type = type;
 
     if (!symtable.insert(var)) {
-      // ERROR
+      ERROR(Error::SEM, "Variable " << var->id << " is already defined.");
+      throwError();
+      
+      delete var;
     }    
     
-    varList.pop_front();
+    variables.pop_front();
   } 
   
-  return genInstEmpty();
+  return new InstructionList();
 }
 
 InstructionList* Driver::genAssignment(string *id, Expression *expr) {
 
-  Variable *var = getVariable(id);
+  InstructionList *inst = new InstructionList();
+  Variable *var = symtable.lookupVariable(*id);
   
-  if (var == NULL || var->type != expr->var->type) {
-    // ERROR
+  if (var == NULL) {
+    ERROR(Error::SEM, "Variable " << *id << " is not defined.");
+    throwError();
   }
+  else if (var->type != expr->var->type) {
+    ERROR(Error::SEM, "Variable " << *id << " has unexpected type.");
+    throwError();  
+  }
+  else {
+    AssignmentInst *i = new AssignmentInst();
+    i->var = expr->var;
+    i->result = var;
   
-  AssignmentInst *i = new AssignmentInst();
-  i->var = expr->var;
-  i->result = var;
-  
-  InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
-  inst->push_back(i);
+    inst = genInstJoin(new InstructionList(), &expr->inst);
+    inst->push_back(i);
+    
+    DEBUG("Generate instr " << *i)
+  }
   
   delete id;
   delete expr;
@@ -431,111 +506,144 @@ InstructionList* Driver::genAssignment(string *id, Expression *expr) {
 
 InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
 
-  Function *fce = getFunction(id);
+  InstructionList *inst = new InstructionList(); 
+  Function *fce = symtable.lookupFunction(*id);
   
   if (fce == NULL) {
-    // ERROR
+    ERROR(Error::SEM, "Function " << *id << " is not defined.");
+    throwError();
   }
+  else if (!fce->checkParameters(*lexpr)) {
+    ERROR(Error::SEM, "Function " << *id << " expects different parameters.");
+    throwError();  
+  }
+  else {
   
-  // TODO check params
- 
- CallInst *i = new CallInst();
- i->fce = fce;
- i->result = NULL;
- 
- InstructionList *inst = new InstructionList();
+    CallInst *i = new CallInst();
+    i->fce = fce;
+    i->result = NULL;
   
-  while (!lexpr->empty()) {
+    while (!lexpr->empty()) {
    
-    // add var 
-    i->args.push_back(lexpr->front()->var);
+      // add var 
+      i->args.push_back(lexpr->front()->var);
     
-    // join inst
-    inst = genInstJoin(inst, &lexpr->front()->inst);
+      // join inst
+      inst = genInstJoin(inst, &lexpr->front()->inst);
     
-    // pop
-    lexpr->pop_front();
+      // pop
+      lexpr->pop_front();
+    }
+  
+    inst->push_back(i);  
+    DEBUG("Generate instr " << *i)
   }
   
-  inst->push_back(i);
-  
-  delete id;
+  freeExpressions(*lexpr);
   delete lexpr;
-  
+  delete id;
+    
   return inst;
 }
 
 InstructionList* Driver::genReturn(Expression *expr) {
 
-  ReturnInst *i = new ReturnInst();
-  i->result = expr->var;
+  InstructionList *inst = new InstructionList();
   
-  InstructionList *inst = genInstJoin(new InstructionList(), &expr->inst);
-  inst->push_back(i);
+  if (symtable.actualFunction->type != expr->var->type) {
+    ERROR(Error::SEM, "Function " << symtable.actualFunction->id << " returns different type.");
+    throwError();   
+  }
+  else {
+    ReturnInst *i = new ReturnInst();
+    i->result = expr->var;
+  
+    inst = genInstJoin(inst, &expr->inst);
+    inst->push_back(i);
+    DEBUG("Generate instr " << *i)
+  }
   
   delete expr;
-
   return inst;
 }
 
 InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
 
+  InstructionList *inst = new InstructionList();
+
   if (expr->var->type != Symtable::TINT) {
-    // ERROR
+    ERROR(Error::SEM, "Type of while condition is not integer.");
+    throwError(); 
+  }
+  else {
+    Label *start = new Label();
+    Label *end = new Label();
+  
+    JumpFalseInst *jumpif = new JumpFalseInst();
+    jumpif->cond = expr->var;
+    jumpif->label = end;
+  
+    JumpInst *jump = new JumpInst(); 
+    jump->label = start;
+  
+    inst->push_back(start);
+    inst = genInstJoin(inst, &expr->inst);
+    inst->push_back(jumpif);
+    inst = genInstJoin(inst, l);
+    inst->push_back(jump);
+    inst->push_back(end);   
+    
+    DEBUG("Generate instr " << *start)
+    DEBUG("Generate instr " << *jumpif)
+    DEBUG("Generate instr " << *jump)
+    DEBUG("Generate instr " << *end)
   }
   
-  Label *start = new Label();
-  Label *end = new Label();
-  
-  JumpFalseInst *jumpif = new JumpFalseInst();
-  jumpif->cond = expr->var;
-  jumpif->label = end;
-  
-  JumpInst *jump = new JumpInst(); 
-  jump->label = start;
-  
-  InstructionList *inst = new InstructionList();
-  inst->push_back(start);
-  inst = genInstJoin(inst, &expr->inst);
-  inst->push_back(jumpif);
-  inst = genInstJoin(inst, l);
-  inst->push_back(jump);
-  inst->push_back(end);
-  
-  delete expr;
+  freeInstructions(*l);
   delete l;
-  
+  delete expr;
+
   return inst;
 }
 
 InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, InstructionList *l2) {
 
+  InstructionList *inst = new InstructionList();
+
   if (expr->var->type != Symtable::TINT) {
-    // ERROR
+    ERROR(Error::SEM, "Type of if condition is not integer.");
+    throwError();
+  }
+  else {
+    Label *middle = new Label();
+    Label *end   = new Label();
+  
+    JumpFalseInst *jumpif = new JumpFalseInst();
+    jumpif->cond = expr->var;
+    jumpif->label = middle;
+  
+    JumpInst *jump = new JumpInst(); 
+    jump->label = end;
+
+    inst = genInstJoin(inst, &expr->inst);
+    inst->push_back(jumpif);
+    inst = genInstJoin(inst, l1);
+    inst->push_back(jump);
+    inst->push_back(middle);
+    inst = genInstJoin(inst, l2);
+    inst->push_back(end);
+    
+    DEBUG("Generate instr " << *jumpif)
+    DEBUG("Generate instr " << *jump)
+    DEBUG("Generate instr " << *middle)
+    DEBUG("Generate instr " << *end)
   }
   
-  Label *middle = new Label();
-  Label *end   = new Label();
-  
-  JumpFalseInst *jumpif = new JumpFalseInst();
-  jumpif->cond = expr->var;
-  jumpif->label = middle;
-  
-  JumpInst *jump = new JumpInst(); 
-  jump->label = end;
-  
-  InstructionList *inst = new InstructionList();
-  inst = genInstJoin(inst, &expr->inst);
-  inst->push_back(jumpif);
-  inst = genInstJoin(inst, l1);
-  inst->push_back(jump);
-  inst->push_back(middle);
-  inst = genInstJoin(inst, l2);
-  inst->push_back(end);
-  
-  delete expr;
+  freeInstructions(*l1);
+  freeInstructions(*l2);
   delete l1;
   delete l2;
+  delete expr;
   
   return inst;
 }

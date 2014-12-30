@@ -1,0 +1,15 @@
+
+void y (void) {
+  // nic
+}
+
+string f(string);
+
+string f (string a) {
+  return a;
+}
+
+int x (int a) {
+  return 10;
+}
+

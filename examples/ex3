@@ -1,0 +1,25 @@
+
+void y (void) {
+  // nic
+}
+
+string f(string, int);
+
+string f (string a, int b) {
+  return a;
+}
+
+int x (int a, int b) {
+  a = a * b;
+  {
+    int b,c;
+    b = 10;
+    c = 0;
+    while(b > 1) {
+      c = c + b;
+    }
+  }
+  
+  //return b;
+}
+

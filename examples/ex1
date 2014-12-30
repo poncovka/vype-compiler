@@ -1,0 +1,12 @@
+
+
+int x(int a, int b) {
+   int d, e, f;
+   d = e;
+}
+
+int y(int a, int b, int c) {
+   int d, e, f;
+   d = e;
+   x(a,b);
+}

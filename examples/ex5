@@ -1,0 +1,9 @@
+
+void f(int b) {}
+
+int main (void) {
+  string a,b,c;
+  a = b + c / 2;
+  a = f(a);
+  return a + b;
+}

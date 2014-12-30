@@ -79,8 +79,8 @@ functions:
   ;
 
 fce_declaration: 
-    type ID '(' VOID ')' ';'              {driver.addFunction($2, $1);}
-  | type ID '(' datatype_list ')' ';'     {driver.addFunction($2, $1);}
+    type ID '(' VOID ')' ';'              {driver.addDeclaration($2, $1);}
+  | type ID '(' datatype_list ')' ';'     {driver.addDeclaration($2, $1);}
   ;
 
 fce_definition:  
@@ -189,11 +189,7 @@ expr_list:
 namespace yy {
 
   void parser::error(location const &loc, const string& msg) {
-  
-    if (!msg.empty()) {
-      driver.errorSyn(loc, msg);
-    }
-    
+    driver.errorSyn(loc, msg);
   }
   
 }

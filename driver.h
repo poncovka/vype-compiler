@@ -32,13 +32,12 @@ class Driver {
   Driver();
   ~Driver();
   
-  int parse(FILE *f, const string &fname);
+  void parse(FILE *f, const string &fname);
   
   void errorLex(yy::location const &loc, const string &msg);
   void errorSyn(yy::location const &loc, const string &msg);
-  void throwError();
   
-  void addFunction(string *id, Symtable::Type type);
+  void addDeclaration(string *id, Symtable::Type type);
   void addParam(string *id, Symtable::Type type);
   void addType(Symtable::Type type);
   void addId(string *id);

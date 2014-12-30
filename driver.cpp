@@ -14,53 +14,49 @@
 //////////////////////////////////// Driver
 
 Driver::Driver() : parser(*this) {
-
   tempCount = 0;
 }
 
 Driver::~Driver() {
 }
 
-int Driver::parse(FILE *f, const string &fname) {
+void Driver::parse(FILE *f, const string &fname) {
 
   filename = fname;
   extern FILE *yyin;
   yyin = f;
 
-  return parser.parse();
+  parser.parse();
+  
+  // TODO check main function
+  // TODO check if all functions are declared
 }
 
 void Driver::errorLex(yy::location const &loc, const string &msg) {
-
   ERROR(Error::LEX, "lexical error, " << msg << " at " << loc)
-  throwError();
 }
 
 void Driver::errorSyn(yy::location const &loc, const string &msg) {
-
   ERROR(Error::SYN, msg << " at " << loc)
-  throwError();
-}
-
-void Driver::throwError() {
-  parser.error(yy::location(), "");
 }
 
 //////////////////////////////////// Driver.add
 
-void Driver::addFunction(string *id, Symtable::Type type) {
+void Driver::addDeclaration(string *id, Symtable::Type type) {
   
-  Function *func = new Function(*id, variables, type);
+  Function *func = new Function(*id, variables, type, false);
   
   if (!symtable.insert(func)) {
     ERROR(Error::SEM, "Function " << *id << " already exists.")
-    throwError();
     delete func;
   }
+  else {
+    DEBUG("Created function " << *id)
+  }
   
-  DEBUG("Created function " << *id)
   delete id;
-  freeVariables(variables);
+  //freeVariables(variables);
+  variables.clear();
 }
 
 void Driver::addParam(string *id, Symtable::Type type) {
@@ -103,47 +99,71 @@ Variable* Driver::getTempVariable(Symtable::Type type) {
 
 void Driver::enterFunc(string *id, Symtable::Type type) {
   
+  // find function
   Function *func = symtable.lookupFunction(*id);
-  
-  // function was declared, check headers
   if (func != NULL) {
   
-    if (func->type != type) {
-      ERROR(Error::SEM, "Function " << *id << " has different return type.")
-      throwError();
+    // function was defined    
+    if (func->isdef) {
+    
+      ERROR(Error::SEM, "Function " << *id << " was already defined.")
+      
+      //freeVariables(variables);
+      variables.clear();
+      symtable.enterBlock(func);
+      return;
     }
     
-    if (!func->checkParameters(variables)) {
-      ERROR(Error::SEM, "Function " << *id << " has different parameters types.")
-      throwError();
-   }
-   freeVariables(func->params);
-   func->params.splice(func->params.begin(), variables);
+    // function was declared
+    else {
+  
+      if (func->type != type) {
+        ERROR(Error::SEM, "Function " << *id << " has different return type.")
+      }
+    
+      if (!func->checkParameters(variables)) {
+        ERROR(Error::SEM, "Function " << *id << " has different parameters types.")
+      }
 
+      //freeVariables(func->params);
+      func->params.clear();
+      func->params.splice(func->params.begin(), variables);
+      func->isdef = true;
+    }
   }
 
-  // function was not declared, add the function  
+  // function does not exist
   else {  
-    func = new Function(*id, variables, type);
+    func = new Function(*id, variables, type, true);
     symtable.insert(func);
-    
     DEBUG("Created new function " << *id)
   }
   
   // enter block
   symtable.enterBlock(func);
    
-  // add parameters to variable table
-  for (list<Variable*>::iterator i = func->params.begin(); i != func->params.end(); ++i) {
+  // add parameters to variable table  
+  for (list<Variable*>::iterator i = func->params.begin(); i != func->params.end();) {
     
     if (!symtable.insert(*i)) {
-      // TODO check params before !!!
+    
+      // variable exists
       ERROR(Error::SEM, "Function parameter " << (*i)->id << " already exists.")
-      throwError();
+      
+      // remove variable from param list
+      list<Variable*>::iterator j = i;
+      Variable *var = *j;
+      ++i;
+      func->params.erase(j);
+      //delete var;
+      
+      continue;
     }
-  }    
+    
+    ++i;
+  }   
   
-  freeVariables(variables);
+  variables.clear(); 
 }
 
 void Driver::leaveFunc(string *id, InstructionList *l) {
@@ -242,8 +262,7 @@ Expression* Driver::genExprVar(string *id) {
   
     // variable is not defined
     ERROR(Error::SEM, "Variable " << *id << " is not defined.")
-    throwError();
-    
+        
     // try to guess the type
     Variable *tvar = getTempVariable(Symtable::TINT);    
     expr = new Expression(tvar, inst);
@@ -282,8 +301,7 @@ Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
   
     // function is not defined
     ERROR(Error::SEM, "Function " << *id << " is not defined.")
-    throwError();
-    
+        
     // try to guess the type
     Variable *tvar = getTempVariable(Symtable::TINT);    
     expr = new Expression(tvar, inst);
@@ -335,7 +353,6 @@ Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
   
   if (!ctos && !ctoi && !itoc) {
     ERROR(Error::SEM, "Impossible cast operation.")
-    throwError();
   }
 
   // create temp
@@ -391,7 +408,6 @@ Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Op
   
   if (!check) {
     ERROR(Error::SEM, "Wrong types of operands.")
-    throwError();
   }
 
   // create temp
@@ -462,9 +478,7 @@ InstructionList* Driver::genVariables(Symtable::Type type) {
     var->type = type;
 
     if (!symtable.insert(var)) {
-      ERROR(Error::SEM, "Variable " << var->id << " is already defined.");
-      throwError();
-      
+      ERROR(Error::SEM, "Variable " << var->id << " is already defined."); 
       delete var;
     }    
     
@@ -481,11 +495,9 @@ InstructionList* Driver::genAssignment(string *id, Expression *expr) {
   
   if (var == NULL) {
     ERROR(Error::SEM, "Variable " << *id << " is not defined.");
-    throwError();
   }
   else if (var->type != expr->var->type) {
-    ERROR(Error::SEM, "Variable " << *id << " has unexpected type.");
-    throwError();  
+    ERROR(Error::SEM, "Variable " << *id << " has unexpected type.");    
   }
   else {
     AssignmentInst *i = new AssignmentInst();
@@ -511,11 +523,9 @@ InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
   
   if (fce == NULL) {
     ERROR(Error::SEM, "Function " << *id << " is not defined.");
-    throwError();
   }
   else if (!fce->checkParameters(*lexpr)) {
     ERROR(Error::SEM, "Function " << *id << " expects different parameters.");
-    throwError();  
   }
   else {
   
@@ -551,8 +561,7 @@ InstructionList* Driver::genReturn(Expression *expr) {
   InstructionList *inst = new InstructionList();
   
   if (symtable.actualFunction->type != expr->var->type) {
-    ERROR(Error::SEM, "Function " << symtable.actualFunction->id << " returns different type.");
-    throwError();   
+    ERROR(Error::SEM, "Function " << symtable.actualFunction->id << " returns different type.");     
   }
   else {
     ReturnInst *i = new ReturnInst();
@@ -572,8 +581,7 @@ InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
   InstructionList *inst = new InstructionList();
 
   if (expr->var->type != Symtable::TINT) {
-    ERROR(Error::SEM, "Type of while condition is not integer.");
-    throwError(); 
+    ERROR(Error::SEM, "Type of while condition is not integer."); 
   }
   else {
     Label *start = new Label();
@@ -612,7 +620,6 @@ InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, Ins
 
   if (expr->var->type != Symtable::TINT) {
     ERROR(Error::SEM, "Type of if condition is not integer.");
-    throwError();
   }
   else {
     Label *middle = new Label();

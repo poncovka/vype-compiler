@@ -47,23 +47,27 @@ Variable* VariableTable::lookup(string &id) {
 VariableTable::~VariableTable() {
 
   for(tmap::iterator i=symbolTable.begin(); i != symbolTable.end(); ++i) {
-    //delete i->second;
+    delete i->second;
   }
 }
 
 //////////////////////////////////// Function
 
-Function::Function(string &id, list<Variable*> params, Symtable::Type type) {
+Function::Function(string &id, list<Variable*> params, Symtable::Type type, bool isdef) {
 
   this->type = type;
   this->id = id;
   this->params.splice(this->params.begin(), params);
+  this->isdef = isdef;
   
 }
 
 Function::~Function() {
 
-  params.clear(); // TODO could have variables that are not in table
+  if (!isdef) {
+    freeVariables(params);
+  }
+  
   freeInstructions(instructions);
   freeVariableTables(variables);
   
@@ -217,7 +221,7 @@ int Label::maxlabel = 0;
 
 Label::Label() {
   std::stringstream stream;
-  stream << "L_" << Label::maxlabel++ ;
+  stream << "L" << Label::maxlabel++ ;
   this->label = string(stream.str());
 }
 
@@ -258,12 +262,12 @@ std::ostream& operator<< (std::ostream& os, const AssignmentInst& i) {
 }
 
 std::ostream& operator<< (std::ostream& os, const JumpInst& i) {
-  os << "goto " << i.label ;
+  os << "goto " << *i.label ;
   return os;
 }
 
 std::ostream& operator<< (std::ostream& os, const JumpFalseInst& i) {
-  os << "if not " << *i.cond << " goto " << i.label ;
+  os << "if not " << *i.cond << " goto " << *i.label ;
   return os;
 
 }

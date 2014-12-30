@@ -92,11 +92,12 @@ public:
   Symtable::Type type;
   string id;
   tvarlist params;
-  ttablelist variables;
+  bool isdef;
   
+  ttablelist variables;
   InstructionList instructions;
 
-  Function(string &id, list<Variable*> params, Symtable::Type type);
+  Function(string &id, list<Variable*> params, Symtable::Type type, bool isdef);
   ~Function();
   
   VariableTable* createVariableTable();

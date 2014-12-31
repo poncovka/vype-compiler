@@ -5,14 +5,15 @@
 %debug
 
 %define parser_class_name "parser"
-%define parse.error verbose
+/* %define parse.error verbose */
 
 %code requires{
   #include "symtable.h"
   class Driver;
 }
 
-%param { Driver& driver }
+%parse-param { Driver& driver }
+%lex-param { Driver& driver }
 
 %{
   #include <iostream>

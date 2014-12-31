@@ -14,9 +14,10 @@
 
 #include <string>
 #include <sstream>
+#include "parser.tab.hh"
 #include "error.h"
 #include "symtable.h"
-#include "parser.tab.hh"
+#include "instruction.h"
 
 class Driver {
 

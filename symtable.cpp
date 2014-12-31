@@ -11,7 +11,6 @@
 
 #include "symtable.h"
 
-
 //////////////////////////////////// Symtable
 
 string Symtable::str(Symtable::Type type) {
@@ -304,104 +303,6 @@ Expression::Expression(Variable *var, InstructionList *l) {
 Expression::~Expression() {
   freeInstructions(inst);
 }
-
-//////////////////////////////////// Instructions
-
-int Label::maxid = 0;
-
-Label::Label() {
-  std::stringstream stream;
-  stream << "L" << Label::maxid++ ;
-  stream.str(this->id);
-}
-
-Label::Label(const Label &label) {
-  this->id = label.id;
-}
-
-string Label::str() {
-  std::stringstream stream;
-  stream << "label " << id;
-  return stream.str();
-}
-
-string ExpressionInst::str() {
-  std::stringstream stream;
-  
-  if (op == Symtable::NEG) {
-    stream << result->id << " = " << Symtable::str(op) << " " << var1->id;
-  }
-  else {
-    stream << result->id << " = " << var1->id << " " << Symtable::str(op) << " " << var2->id;
-  }
-  
-  return stream.str();
-}
-
-string CastInst::str() {
-  std::stringstream stream;
-  stream << result->id << " = (" << Symtable::str(type) << ") " << var->id;
-  return stream.str();
-}
-
-string LoadInst::str() {
-  std::stringstream stream;
-  stream << result->id << " = " << Symtable::str(result->type);
-  return stream.str();
-}
-
-string AssignmentInst::str() {
-  std::stringstream stream;
-  stream << result->id << " = " << var->id;
-  return stream.str();
-}
-
-string JumpInst::str() {
-  std::stringstream stream;
-  stream << "jump to " << label->id;
-  return stream.str();
-}
-
-string JumpFalseInst::str() {
-  std::stringstream stream;
-  stream << "if not " << cond->id << " jump to " << label->id;
-  return stream.str();
-}
-
-string CallInst::str() {
-  std::stringstream stream;
-  
-  if (result) {
-    stream << result->id << " = " ;
-  }
-  
-  stream << fce->id << "(";
-  
-  bool first = true;
-  for (list<Variable*>::iterator i = args.begin(); i != args.end(); ++i) {
-    
-    if (!first) {
-      stream << ", ";
-    }
-    
-    stream << (*i)->id;
-    first = false;
-  }
-  
-  stream << ")";
-  return stream.str();
-}
-
-CallInst::~CallInst() {
-  args.clear();
-}
-
-string ReturnInst::str() {
-  std::stringstream stream;
-  stream << "return " << result->id;
-  return stream.str();
-}
-
 
 //////////////////////////////////// free
 

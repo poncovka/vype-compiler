@@ -34,15 +34,14 @@ string Generator::run(FunctionTable functions) {
 		Function &f = *(i->second);
 
 		for (list<Instruction*>::iterator l = f.instructions.begin(); l != f.instructions.end(); ++l) {
-		  Instruction *p = *l;
-		  Instruction &inst = *p;
-//			generate(l);
+		  (*l)->generate(this);
 		}
 	}
 
 	return mips;
 }
 
+/*
 string Generator::generate(Label& i) {
 	return i.str() + ":\n";
 }
@@ -148,6 +147,7 @@ string Generator::generate(ReturnInst &i) { // return a
 	return mips;
 }
 
+
 //Generator::isAddressable(Instruction i) {
 //	if (address_table.find(i) == address_table.end()) {
 //
@@ -174,3 +174,5 @@ string Generator::allocateVariables(list<VariableTable*> variables) {
 
 	return "a";
 }
+
+*/

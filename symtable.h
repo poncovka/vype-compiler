@@ -39,7 +39,15 @@ namespace Symtable {
 
 //////////////////////////////////// Inst
 
-class Instruction;
+class Generator;
+
+class Instruction {
+public:
+	virtual ~Instruction() {};
+  virtual string str() {};
+	virtual string generate(Generator *generator){};
+};
+
 typedef std::list<Instruction*> InstructionList;
 typedef std::list<Instruction*>::iterator InstructionIter;
 
@@ -173,109 +181,6 @@ public:
 	void enterBlock(Function *func);
 	void enterBlock();
 	void leaveBlock();
-
-};
-
-//////////////////////////////////// Instructions
-
-class Instruction {
-public:
-	virtual string str() = 0;
-
-	virtual ~Instruction() {
-	};
-
-};
-
-class Label : public Instruction {
-private:
-	static int maxid;
-
-public:
-	string id;
-	string str();
-
-	Label();
-	Label(const Label &label);
-};
-
-// result = a op b
-
-class ExpressionInst : public Instruction {
-public:
-	Variable *var1;
-	Variable *var2;
-	Variable *result;
-	Symtable::Operator op;
-	string str();
-};
-
-// result = (type) a
-
-class CastInst : public Instruction {
-public:
-	Variable *var;
-	Variable *result;
-	Symtable::Type type;
-	string str();
-
-};
-
-// a = value
-
-class LoadInst : public Instruction {
-public:
-	Variable *result;
-	string str();
-
-};
-
-// a = b;
-
-class AssignmentInst : public Instruction {
-public:
-	Variable *var;
-	Variable *result;
-	string str();
-};
-
-// goto a
-
-class JumpInst : public Instruction {
-public:
-	Label *label;
-	string str();
-
-};
-
-// if not a then goto b
-
-class JumpFalseInst : public Instruction {
-public:
-	Variable *cond;
-	Label *label;
-	string str();
-
-};
-
-// a = func(b,c)
-
-class CallInst : public Instruction {
-public:
-	Function *fce;
-	list<Variable*> args;
-	Variable *result;
-	string str();
-
-	~CallInst();
-};
-
-// return a
-
-class ReturnInst : public Instruction {
-public:
-	Variable *result;
-	string str();
 
 };
 

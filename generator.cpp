@@ -36,18 +36,18 @@ string Generator::run(FunctionTable functions) {
 		for (list<Instruction*>::iterator l = f.instructions.begin(); l != f.instructions.end(); ++l) {
 		  Instruction *p = *l;
 		  Instruction &inst = *p;
-			generate(*l);
+//			generate(l);
 		}
 	}
 
 	return mips;
 }
 
-string Generator::generate(Label &i) {
+string Generator::generate(Label& i) {
 	return i.str() + ":\n";
 }
 
-string Generator::generate(ExpressionInst &i) { // result = a op b
+string Generator::generate(ExpressionInst& i) { // result = a op b
 	string rd, rs, rt;
 	string mips = "";
 

@@ -34,6 +34,9 @@ class Driver {
   
   void parse(FILE *f, const string &fname);
   
+  void init();
+  void check();
+  
   void errorLex(yy::location const &loc, const string &msg);
   void errorSyn(yy::location const &loc, const string &msg);
   

@@ -42,7 +42,7 @@ typedef std::list<Instruction*>::iterator InstructionIter;
 
 class Variable {
 
-public:
+  public:
   Symtable::Type type;
   string id;
   
@@ -61,7 +61,7 @@ class VariableTable {
   typedef pair<string, Variable*> tpair;
   typedef pair<tmap::iterator, bool> treturn;
 
-public:
+  public:
   tmap symtable;
   
   ~VariableTable();
@@ -75,12 +75,12 @@ public:
 class Expression {
 
   public:
-    Variable *var;
-    InstructionList inst;
+  Variable *var;
+  InstructionList inst;
 
-    Expression();
-    Expression(Variable *var, InstructionList *l);
-    ~Expression();
+  Expression();
+  Expression(Variable *var, InstructionList *l);
+  ~Expression();
 };
 
 typedef std::list<Expression*> ExpressionList;
@@ -93,25 +93,43 @@ class Function {
   typedef list<Variable*> tvarlist;
   typedef list<VariableTable*> ttablelist;
 
-public:
+  public:
   Symtable::Type type;
   string id;
   tvarlist params;
+  
   bool isdef;
+  bool isbuiltin;
   
   ttablelist variables;
   InstructionList instructions;
 
-  Function(string &id, list<Variable*> params, Symtable::Type type, bool isdef);
+  Function(string &id, list<Variable*> params, Symtable::Type type);
+  Function(){};
   ~Function();
+  
+  static Function* createDeclaration(string &id, list<Variable*> params, Symtable::Type type);
+  static Function* createBuiltin(string &id, list<Variable*> params, Symtable::Type type);
   
   VariableTable* createVariableTable();
   
-  bool checkParameters(list<Variable*> variables);
-  bool checkParameters(list<Expression*> expressions);
+  virtual bool checkParameters(list<Variable*> variables);
+  virtual bool checkParameters(list<Expression*> expressions);
   
   string str();
   void clear();
+  
+};
+
+class UnlimitedBuiltinFunction : public Function {
+
+  public:
+  int minparams;
+  
+  UnlimitedBuiltinFunction(string &id, int minparams, Symtable::Type type);
+  
+  bool checkParameters(list<Variable*> variables);
+  bool checkParameters(list<Expression*> expressions);  
   
 };
 

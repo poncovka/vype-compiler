@@ -73,17 +73,36 @@ VariableTable::~VariableTable() {
 
 //////////////////////////////////// Function
 
-Function::Function(string &id, list<Variable*> params, Symtable::Type type, bool isdef) {
+Function::Function(string &id, list<Variable*> params, Symtable::Type type) {
 
   this->type = type;
   this->id = id;
   this->params.splice(this->params.begin(), params);
-  this->isdef = isdef;
+  
+  this->isdef = true;
+  this->isbuiltin = false;
   
 }
 
 Function::~Function() {
   clear();
+}
+
+Function* Function::createDeclaration(string &id, list<Variable*> params, Symtable::Type type) {
+
+  Function *f = new Function(id, params, type);
+  f->isdef = false;
+  return f;
+  
+}
+
+Function* Function::createBuiltin(string &id, list<Variable*> params, Symtable::Type type) {
+
+  Function *f = new Function(id, params, type);
+  f->isdef = false;
+  f->isbuiltin = true;
+  return f;
+
 }
 
 VariableTable* Function::createVariableTable() {
@@ -151,6 +170,27 @@ void Function::clear() {
   freeInstructions(instructions);
   freeVariableTables(variables);
   
+}
+
+//////////////////////////////////// UnlimitedBuiltinFunction
+
+UnlimitedBuiltinFunction::UnlimitedBuiltinFunction (string &id, int minparams, Symtable::Type type) : Function() {
+
+  this->type = type;
+  this->id = id;
+  this->minparams = minparams;
+  
+  this->isdef = false;
+  this->isbuiltin = true;
+
+}
+
+bool UnlimitedBuiltinFunction::checkParameters(list<Variable*> variables) {
+  return (variables.size() >= minparams);
+}
+
+bool UnlimitedBuiltinFunction::checkParameters(list<Expression*> expressions) {
+  return (expressions.size() >= minparams);
 }
 
 //////////////////////////////////// FunctionTable

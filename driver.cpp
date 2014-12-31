@@ -22,16 +22,22 @@ Driver::~Driver() {
 
 void Driver::parse(FILE *f, const string &fname) {
 
+  // init
   filename = fname;
   extern FILE *yyin;
   yyin = f;
+  
+  // add built in declarations
+  init();
 
+  // parse
   parser.parse();
   
-  IFDEBUG(debug())
+  // final checks
+  check();
   
-  // TODO check main function
-  // TODO check if all functions are declared
+  // debug print
+  IFDEBUG(debug())
 }
 
 void Driver::errorLex(yy::location const &loc, const string &msg) {
@@ -42,11 +48,118 @@ void Driver::errorSyn(yy::location const &loc, const string &msg) {
   ERROR(Error::SYN, msg << " at " << loc)
 }
 
-//////////////////////////////////// Driver.add
+//////////////////////////////////// init
+
+void Driver::init() {
+
+  Function *f;
+  string name;
+  Symtable::Type type;
+  list<Variable*> params;
+  
+  // void print\( datový_typ ( , datový_typ )* \)
+  type = Symtable::VOID;
+  name = "print";
+  
+  f = new UnlimitedBuiltinFunction(name, 1, type);
+  symtable.insert(f);
+  params.clear(); 
+  
+  // char read_char\( void \)
+  
+  type = Symtable::TCHAR;
+  name = "read_char";
+  
+  f = Function::createBuiltin(name, params, type);
+  symtable.insert(f);
+  params.clear();
+  
+  
+  // int read_int\( void \)
+  type = Symtable::TINT;
+  name = "read_int";
+  
+  f = Function::createBuiltin(name, params, type);
+  symtable.insert(f);
+  params.clear();
+  
+  // string read_string\( void \)
+  type = Symtable::TSTRING;
+  name = "read_string";
+  
+  f = Function::createBuiltin(name, params, type);
+  symtable.insert(f);
+  params.clear();
+
+  // char get_at\(string , int \)
+  type = Symtable::TCHAR;
+  name = "get_at";
+  
+  params.push_back(new Variable(Symtable::TSTRING));
+  params.push_back(new Variable(Symtable::TINT));
+  
+  f = Function::createBuiltin(name, params, type);
+  symtable.insert(f);
+  params.clear();
+
+  // string set_at\(string , int , char \)
+  type = Symtable::TSTRING;
+  name = "set_at";
+  
+  params.push_back(new Variable(Symtable::TSTRING));
+  params.push_back(new Variable(Symtable::TINT));
+  params.push_back(new Variable(Symtable::TCHAR));
+  
+  f = Function::createBuiltin(name, params, type);
+  symtable.insert(f);
+  params.clear();
+
+  // string strcat\(string , string \)
+  type = Symtable::TSTRING;
+  name = "strcat";
+  
+  params.push_back(new Variable(Symtable::TSTRING));
+  params.push_back(new Variable(Symtable::TSTRING));
+  
+  f = Function::createBuiltin(name, params, type);
+  symtable.insert(f);
+  params.clear();  
+
+}
+
+//////////////////////////////////// check
+
+void Driver::check() {
+
+  string main("main");
+  symtable.main = symtable.lookupFunction(main);
+  
+  if (symtable.main == NULL) {
+    ERROR(Error::SEM, "semantic error, missing main function")
+  }
+  else if (symtable.main->type != Symtable::TINT) {
+    ERROR(Error::SEM, "semantic error, function main has to have return type int")
+  }
+  else if (!symtable.main->params.empty()) {
+    ERROR(Error::SEM, "semantic error, main function cannot accept parameters")
+  }
+  
+  FunctionTable &functions = symtable.functions;
+  for (map<string, Function*>::iterator i = functions.symtable.begin(); i != functions.symtable.end(); ++i) {
+  
+    Function &f = *(i->second);  
+    if (!f.isdef && !f.isbuiltin) {
+      ERROR(Error::SEM, "semantic error, function " << f.id << " is declared but not defined")
+    }
+  }
+  
+}
+
+//////////////////////////////////// add
 
 void Driver::addDeclaration(string *id, Symtable::Type type) {
   
-  Function *func = new Function(*id, variables, type, false);
+  Function *func = Function::createDeclaration(*id, variables, type);
   
   if (!symtable.insert(func)) {
     ERROR(Error::SEM, "semantic error, function " << *id << " already exists")
@@ -79,7 +192,7 @@ void Driver::addId(string *id) {
   delete id;
 }
 
-//////////////////////////////////// Driver.get
+//////////////////////////////////// get
 
 Variable* Driver::getTempVariable(Symtable::Type type) {
   
@@ -96,7 +209,7 @@ Variable* Driver::getTempVariable(Symtable::Type type) {
   return var;
 }
 
-//////////////////////////////////// Driver.enter
+//////////////////////////////////// enter
 
 void Driver::enterFunc(string *id, Symtable::Type type) {
   
@@ -138,7 +251,7 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
 
   // function does not exist
   else {    
-    func = new Function(*id, variables, type, true);
+    func = new Function(*id, variables, type);
     symtable.insert(func);
     DEBUG("Created new function " << *id)
   }
@@ -192,7 +305,7 @@ void Driver::leaveBlock() {
   symtable.leaveBlock();
 }
 
-//////////////////////////////////// Driver.generateExpression
+//////////////////////////////////// generateExpression
 
 Expression* Driver::genExprInt(int ival) {
 
@@ -319,6 +432,11 @@ Expression* Driver::genExprFce(string *id, ExpressionList *lexpr) {
 
 Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
 
+  // cast to same type
+  if (expr->var->type == type) {
+    return expr;
+  }
+
   Expression *result = new Expression();
   
   // check cast 
@@ -429,7 +547,7 @@ ExpressionList* Driver::genExprJoin(Expression *e, ExpressionList *l) {
   return l;
 }
 
-//////////////////////////////////// Driver.generate
+//////////////////////////////////// generate
 
 InstructionList* Driver::genInstEmpty() {
   return new InstructionList();
@@ -617,7 +735,7 @@ InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, Ins
   return inst;
 }
 
-//////////////////////////////////// Driver.debug
+//////////////////////////////////// debug
 
 void Driver::debug() {
   

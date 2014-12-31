@@ -15,6 +15,8 @@ How to run the tests:
 
 import unittest
 import subprocess
+import inspect
+import os
 
 class Error():
 
@@ -28,8 +30,7 @@ class Error():
 class TestCase(unittest.TestCase):
 
   program     = '../vype'
-  input_file  = 'temp/input'
-  output_file = 'temp/out.asm'
+  prefix      = 'testcase'
 
   def setUp(self):
     self.input = ""
@@ -39,12 +40,20 @@ class TestCase(unittest.TestCase):
   def execute(self):
     # create input file
     
-    f = open(self.input_file, 'w')
+    method_name = inspect.stack()[1][3].lower()
+    
+    input_file  = 'temp/{}_{}.in'.format(self.prefix, method_name)
+    output_file = 'temp/{}_{}.out'.format(self.prefix, method_name)
+    error_file = 'temp/{}_{}.err'.format(self.prefix, method_name)
+    
+    f = open(input_file, 'w')
     f.write(self.input)
     f.close()
     
     # execute program
-    self.result = subprocess.call([self.program, self.input_file, self.output_file])
+    err = open(error_file, 'wb')
+    self.result = subprocess.call([self.program, input_file, output_file], stderr = err)
+    err.close();
     
     # compare return codes
     self.assertEqual(self.result, self.output, "Expected return code: {}".format(self.output)) 

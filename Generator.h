@@ -25,8 +25,11 @@ public:
 	generate(JumpFalseInst i); // if not a then goto b
 	generate(CallInst i); // a = func(b,c)
 	generate(ReturnInst i); // return a
+	allocateVariables(list<VariableTable*> var_table);
+	isAddressable(Instruction i);
 private:
 	Stack stack;
+	map<Variable*, string> address_table;
 
 };
 

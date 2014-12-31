@@ -35,7 +35,7 @@ class Generator {
 public:
 	Generator();
 	string run(FunctionTable functions);
-	string generate(Label i);
+	string generate(Label& i);
 	string generate(ExpressionInst& i); // result = a op b
 	string generate(CastInst& i); // result = (type) a
 	string generate(LoadInst& i); // a = value

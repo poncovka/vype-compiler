@@ -14,6 +14,7 @@
 #include "parser.tab.hh"
 #include "driver.h"
 #include "error.h"
+#include "Generator.h"
 
 int main(int argc, char **argv) {
   
@@ -50,6 +51,9 @@ int main(int argc, char **argv) {
         else {      
         
           // generating
+          Generator generator;
+          string mips = generator.run(driver.symtable.functions);
+		  cout << mips;
           fclose(out);
         } 
       }    

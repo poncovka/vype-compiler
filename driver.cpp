@@ -49,7 +49,7 @@ void Driver::addDeclaration(string *id, Symtable::Type type) {
   Function *func = new Function(*id, variables, type, false);
   
   if (!symtable.insert(func)) {
-    ERROR(Error::SEM, "Function " << *id << " already exists.")
+    ERROR(Error::SEM, "semantic error, function " << *id << " already exists")
     delete func;
   }
   else {
@@ -62,19 +62,19 @@ void Driver::addDeclaration(string *id, Symtable::Type type) {
 
 void Driver::addParam(string *id, Symtable::Type type) {
   Variable *var = new Variable(*id, type);
-  variables.push_back(var);
+  variables.push_front(var);
   
   delete id;
 }
   
 void Driver::addType(Symtable::Type type) {
   Variable *var = new Variable(type);
-  variables.push_back(var);
+  variables.push_front(var);
 }
 
 void Driver::addId(string *id) {
   Variable *var = new Variable(*id, Symtable::VOID);
-  variables.push_back(var);
+  variables.push_front(var);
   
   delete id;
 }
@@ -107,7 +107,9 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
     // function was defined    
     if (func->isdef) {
     
-      ERROR(Error::SEM, "Function " << *id << " was already defined.")
+      ERROR(Error::SEM, "semantic error, function " << *id 
+      << " was already defined")
+      
       func->clear();
       
       func->params.splice(func->params.begin(), variables);
@@ -119,11 +121,13 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
     else {
   
       if (func->type != type) {
-        ERROR(Error::SEM, "Function " << *id << " has different return type.")
+        ERROR(Error::SEM, "semantic error, function " << *id 
+        << " has declared different return type")
       }
     
       if (!func->checkParameters(variables)) {
-        ERROR(Error::SEM, "Function " << *id << " has different parameters types.")
+        ERROR(Error::SEM, "semantic error, function " << *id 
+        << " has declared different parameters")
       }
 
       freeVariables(func->params);
@@ -133,7 +137,7 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
   }
 
   // function does not exist
-  else {  
+  else {    
     func = new Function(*id, variables, type, true);
     symtable.insert(func);
     DEBUG("Created new function " << *id)
@@ -148,7 +152,8 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
     if (!symtable.insert(*i)) {
     
       // variable exists
-      ERROR(Error::SEM, "Function parameter " << (*i)->id << " already exists.")
+      ERROR(Error::SEM, "semantic error, function parameter " << (*i)->id 
+      << " was already defined")
       
       // remove variable from param list
       list<Variable*>::iterator j = i;
@@ -263,7 +268,7 @@ Expression* Driver::genExprVar(string *id) {
   if (var == NULL) {
   
     // variable is not defined
-    ERROR(Error::SEM, "Variable " << *id << " is not defined.")
+    ERROR(Error::SEM, "semantic error, variable " << *id << " is not defined")
         
     // try to guess the type
     Variable *tvar = getTempVariable(Symtable::TINT);    
@@ -322,7 +327,8 @@ Expression* Driver::genExprCast(Expression *expr, Symtable::Type type) {
   bool itoc = (expr->var->type == Symtable::TINT  && type == Symtable::TCHAR);
   
   if (!ctos && !ctoi && !itoc) {
-    ERROR(Error::SEM, "Impossible cast operation.")
+    ERROR(Error::SEM, "semantic error, impossible cast operation from " 
+    << Symtable::str(expr->var->type) << " to " << Symtable::str(type));
   }
 
   // create temp
@@ -375,7 +381,9 @@ Expression* Driver::genExprOp(Expression *expr1, Expression *expr2, Symtable::Op
   }
   
   if (!check) {
-    ERROR(Error::SEM, "Wrong types of operands.")
+    ERROR(Error::SEM, "semantic error, undefined expression " 
+    << Symtable::str(expr1->var->type) << " " << Symtable::str(op) << " " 
+    << ((op != Symtable::NEG) ? Symtable::str(expr2->var->type) : "") ) 
   }
 
   // create temp
@@ -441,7 +449,9 @@ InstructionList* Driver::genVariables(Symtable::Type type) {
     var->type = type;
 
     if (!symtable.insert(var)) {
-      ERROR(Error::SEM, "Variable " << var->id << " is already defined."); 
+      ERROR(Error::SEM, "semantic error, variable " << var->id 
+      << " is already defined"); 
+      
       delete var;
     }    
     
@@ -457,10 +467,12 @@ InstructionList* Driver::genAssignment(string *id, Expression *expr) {
   Variable *var = symtable.lookupVariable(*id);
   
   if (var == NULL) {
-    ERROR(Error::SEM, "Variable " << *id << " is not defined.");
+    ERROR(Error::SEM, "semantic error, cannot assign to undefined variable " << *id);
   }
   else if (var->type != expr->var->type) {
-    ERROR(Error::SEM, "Variable " << *id << " has unexpected type.");    
+  
+    ERROR(Error::SEM, "semantic error, cannot assign " << Symtable::str(expr->var->type) 
+    << " to variable " << *id << " of type " << Symtable::str(var->type));    
   }
   else {
     AssignmentInst *i = new AssignmentInst();
@@ -483,10 +495,11 @@ InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
   Function *fce = symtable.lookupFunction(*id);
   
   if (fce == NULL) {
-    ERROR(Error::SEM, "Function " << *id << " is not defined.");
+    ERROR(Error::SEM, "semantic error, cannot call undefined function " << *id);
   }
   else if (!fce->checkParameters(*lexpr)) {
-    ERROR(Error::SEM, "Function " << *id << " expects different parameters.");
+    ERROR(Error::SEM, "semantic error, cannot call function " << *id 
+    << " with these arguments");
   }
   else {
   
@@ -519,7 +532,8 @@ InstructionList* Driver::genReturn(Expression *expr) {
   InstructionList *inst = new InstructionList();
   
   if (symtable.actualFunction->type != expr->var->type) {
-    ERROR(Error::SEM, "Function " << symtable.actualFunction->id << " returns different type.");     
+    ERROR(Error::SEM, "semantic error, function " << symtable.actualFunction->id 
+    << " does not return " << Symtable::str(expr->var->type));     
   }
   else {
     ReturnInst *i = new ReturnInst();
@@ -538,7 +552,8 @@ InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
   InstructionList *inst = new InstructionList();
 
   if (expr->var->type != Symtable::TINT) {
-    ERROR(Error::SEM, "Type of while condition is not integer."); 
+    ERROR(Error::SEM, "semantic error, while condition cannot be of type " 
+    << Symtable::str(expr->var->type)); 
   }
   else {
     Label *start = new Label();
@@ -570,7 +585,8 @@ InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, Ins
   InstructionList *inst = new InstructionList();
 
   if (expr->var->type != Symtable::TINT) {
-    ERROR(Error::SEM, "Type of if condition is not integer.");
+    ERROR(Error::SEM, "semantic error, if condition cannot be of type "
+    << Symtable::str(expr->var->type))
   }
   else {
     Label *middle = new Label();

@@ -128,47 +128,160 @@ string ExpressionInst::generate(Generator* g)
     }
     else if (op == Symtable::LT)
     {
-        mips << "LT" << endl;
+        Label ltrue("LT_TRUE_");
+        Label lend("LT_END_");
+
+        mips << "lw  $4, " << rs << " // LT" << endl <<
+                "lw  $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "bltz $3, " << ltrue.id << endl <<                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
 
     }
     else if (op == Symtable::LTE)
     {
-        mips << "LTE" << endl;
+        Label ltrue("LTE_TRUE_");
+        Label lend("LTE_END_");
+
+        mips << "lw  $4, " << rs << " // LTE" << endl <<
+                "lw  $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "blez $3, " << ltrue.id << endl <<                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
 
     }
     else if (op == Symtable::GT)
     {
-        mips << "GT" << endl;
+        Label ltrue("GT_TRUE_");
+        Label lend("GT_END_");
+
+        mips << "lw  $4, " << rs << " // GT" << endl <<
+                "lw  $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "bgtz $3, " << ltrue.id << endl <<                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
 
     }
     else if (op == Symtable::GTE)
     {
-        mips << "GTE" << endl;
+        Label ltrue("GTE_TRUE_");
+        Label lend("GTE_END_");
+
+        mips << "lw  $4, " << rs << " // EQ" << endl <<
+                "lw  $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "bgez $3, " << ltrue.id << endl <<                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
 
     }
     else if (op == Symtable::EQ)
     {
-        mips << "EQ" << endl;
 
+        Label ltrue("EQ_TRUE_");
+        Label lend("EQ_END_");
+
+        mips << "lw  $4, " << rs << " // EQ" << endl <<
+                "lw  $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "beq $3, $10, " << ltrue.id << endl <<                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
     }
     else if (op == Symtable::NEQ)
     {
-        mips << "NEQ" << endl;
+        Label ltrue("NEQ_TRUE_");
+        Label lend("NEQ_END_");
+
+        mips << "lw  $4, " << rs << " // NEQ" << endl <<
+                "lw  $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "bne $3, $10, " << ltrue.id << endl <<                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
 
     }
     else if (op == Symtable::AND)
     {
-        mips << "AND" << endl;
+        Label lfalse("AND_FALSE_");
+        Label lend("AND_END_");
 
+        mips << "lw  $4, " << rs << " // AND" << endl <<
+                "lw  $5, " << rt << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "beq $4, $10, " << lfalse.id << endl <<
+                "beq $5, $10, " << lfalse.id << endl <<                                                                
+                "sw  $11, " << rd << endl <<
+                "b " << lend.id << endl <<
+                lfalse.id << ":" << endl <<
+                "sw  $10, " << rd << endl <<
+                lend.id << ":" << endl;
     }
     else if (op == Symtable::OR)
     {
-        mips << "OR" << endl;
+        Label ltrue("OR_TRUE_");
+        Label lend("OR_END_");
 
+        mips << "lw  $4, " << rs << " // OR" << endl <<
+                "lw  $5, " << rt << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "bne $4, $10, " << ltrue.id << endl <<
+                "bne $5, $10, " << ltrue.id << endl <<                                                                
+                "sw  $10, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $11, " << rd << endl <<
+                lend.id << ":" << endl;
     }
     else if (op == Symtable::NEG)
     {
-        mips << "NEG" << endl;
+        Label ltrue("NEG_TRUE_");
+        Label lend("NEG_END_");
+
+        mips << "lw  $4, " << rs << " // OR" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "beq $4, $10, " << ltrue.id << endl <<
+                "sw  $11, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $10, " << rd << endl <<
+                lend.id << ":" << endl;
     }
 
     return mips.str();

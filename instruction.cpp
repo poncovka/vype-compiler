@@ -80,7 +80,7 @@ string ExpressionInst::generate(Generator* g)
     if (op == Symtable::ADD)
     { // rd ← rs + rt ~ ADD rd, rs, rt
         mips << "lw $4, " << rs << " // ADD" << endl <<
-                "lw $5, " << rt << endl
+                "lw $5, " << rt << endl <<
                 "add $3, $4, $5" << endl <<
                 "sw $3, " << rd << endl;
 
@@ -97,7 +97,7 @@ string ExpressionInst::generate(Generator* g)
     { // rd ← rs × rt ~ MUL rd, rs, rt
         mips << "lw $4, " << rs << " // MUL" << endl <<
                 "lw $5, " << rt << endl <<
-                "mul $3, $4, $5" << endl
+                "mul $3, $4, $5" << endl <<
                 "sw $3, " << rd << endl;
 
     }
@@ -121,50 +121,50 @@ string ExpressionInst::generate(Generator* g)
     }
     else if (op == Symtable::LT)
     {
-        mips = "LT" + endl;
+        mips << "LT" << endl;
 
     }
     else if (op == Symtable::LTE)
     {
-        mips = "LTE" + endl;
+        mips << "LTE" << endl;
 
     }
     else if (op == Symtable::GT)
     {
-        mips = "GT" + endl;
+        mips << "GT" << endl;
 
     }
     else if (op == Symtable::GTE)
     {
-        mips = "GTE" + endl;
+        mips << "GTE" << endl;
 
     }
     else if (op == Symtable::EQ)
     {
-        mips = "EQ" + endl;
+        mips << "EQ" << endl;
 
     }
     else if (op == Symtable::NEQ)
     {
-        mips = "NEQ" + endl;
+        mips << "NEQ" << endl;
 
     }
     else if (op == Symtable::AND)
     {
-        mips = "AND" + endl;
+        mips << "AND" << endl;
 
     }
     else if (op == Symtable::OR)
     {
-        mips = "OR" + endl;
+        mips << "OR" << endl;
 
     }
     else if (op == Symtable::NEG)
     {
-        mips = "NEG" + endl;
+        mips << "NEG" << endl;
     }
 
-    return mips;
+    return mips.str();
 }
 //////////////////////////////////// CastInst
 
@@ -177,15 +177,16 @@ string CastInst::str()
 
 string CastInst::generate(Generator * g)
 { // result = (type) a
-    string mips = "CAST" + endl;
-    return mips;
+    stringstream mips;
+    mips << "CAST" << endl;
+    return mips.str();
 }
 
 //////////////////////////////////// LoadInst
 
 string LoadInst::str()
 {
-    std::stringstream stream;
+    stringstream stream;
     stream << result->id << " = " << Symtable::str(result->type);
     return stream.str();
 }
@@ -271,7 +272,9 @@ string JumpInst::str()
 
 string JumpInst::generate(Generator * generator)
 { // goto a
-    return "j " + label->id + " // Jump" + endl;
+    stringstream mips;
+    mips << "j " << label->id << " // Jump" << endl;
+    return mips.str();
 }
 
 //////////////////////////////////// JumpFalseInst
@@ -285,8 +288,9 @@ string JumpFalseInst::str()
 
 string JumpFalseInst::generate(Generator * g)
 { // if not a then goto b
-    string mips = "JFALSE " + label->id + endl;
-    return mips;
+    stringstream mips;
+    mips << "JFALSE " << label->id << endl;
+    return mips.str();
 }
 
 //////////////////////////////////// CallInst
@@ -352,8 +356,9 @@ string ReturnInst::str()
 
 string ReturnInst::generate(Generator * g)
 { // return a
-    string mips = "jr $ra // Return" + endl;
-    return mips;
+    stringstream mips;
+    mips << "jr $ra // Return" << endl;
+    return mips.str();
 }
 
 /* end of file */

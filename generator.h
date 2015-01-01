@@ -36,7 +36,7 @@ public:
 	Generator();
 	string run(FunctionTable &functions);
 	Stack stack;
-	map<Variable*, unsigned> address_table;
+	map<Variable*, string> address_table;
 	string allocateVariables(list<VariableTable*> var_table);
 
 //	isAddressable(Instruction i);

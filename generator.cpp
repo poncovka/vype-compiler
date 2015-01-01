@@ -38,7 +38,7 @@ string Stack::pop(unsigned i)
 
 Generator::Generator() : stack(8192)
 {
-    data = endl << ".data" << endl;
+    data = endl + ".data" + endl;
     data_counter = 0;
 }
 

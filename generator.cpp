@@ -18,37 +18,52 @@ Stack::Stack(unsigned size)
     fp = size;
 }
 
-void Stack::push(unsigned i)
+string Stack::push(unsigned i)
 {
     sp -= i;
+    
+    stringstream mips;
+    mips << "ADDI $sp,$sp,-" << i << "\n";
+    return mips.str();
 }
 
-void Stack::pop(unsigned i)
+string Stack::pop(unsigned i)
 {
     sp += i;
+    
+    stringstream mips;
+    mips << "ADDI $sp,$sp," << i << "\n";
+    return mips.str();
 }
 
-Generator::Generator() : stack(8192)
+Generator::Generator(): stack (8192)
 {
+    data = "\n.data\n";
+    data_counter = 0;
 }
 
 string Generator::run(FunctionTable& functions)
 {
-    string mips = ".text\n";
+    stringstream mips;    
+    mips << ".text\n";
 
     for (map<string, Function*>::iterator i = functions.symtable.begin(); i != functions.symtable.end(); ++i)
     {
+        stack.fp = stack.size;
+        stack.sp = stack.size;
+        
         Function &f = *(i->second);
-
         allocateVariables(f.variables);
 
         for (list<Instruction*>::iterator l = f.instructions.begin(); l != f.instructions.end(); ++l)
         {
-            mips += string((*l)->generate(this));
+            mips << string((*l)->generate(this));
         }
     }
+    
+    mips << data << "\n";
 
-    return mips;
+    return mips.str();
 }
 
 //Generator::isAddressable(Instruction i) {
@@ -69,9 +84,10 @@ string Generator::allocateVariables(list<VariableTable*> variables)
         for (map<string, Variable*>::iterator j = variables.symtable.begin(); j != variables.symtable.end(); ++j)
         {
             Variable &variable = *(j->second);
+
             unsigned offset = stack.fp - stack.sp;
             ss.str("");
-            ss << "$fp + " << offset;
+            ss << "-" << offset << "($fp)";
             address_table.insert(make_pair(&variable, ss.str()));
 
             if (variable.type == Symtable::TINT || variable.type == Symtable::TSTRING)

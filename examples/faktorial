@@ -2,8 +2,12 @@
 
 int main(void) { // Hlavni telo programu
 	int a, vysl;
+	char c;
+
 	print("Zadejte cislo pro vypocet faktorialu");
 	a = read_int();
+
+	c = '5';
 	
 	if (a < 0) {
 		print("\nFaktorial nelze spocitat\n");

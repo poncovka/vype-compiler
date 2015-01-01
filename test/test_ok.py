@@ -2,15 +2,6 @@
 test_ok.py
 
 Tests with correct inputs.
-
-Method:
-  def test_(self):
-    self.input = \
-'''
-'''
-    self.output = Error.OK
-    self.execute()
-    
 '''
 
 from base import TestCase, Error
@@ -20,7 +11,7 @@ class OKTestCase(TestCase):
 #-----------------------------------
   def test_main(self):
     self.input = \
-'''
+r'''
 int main(void) {
 }
 '''
@@ -30,7 +21,7 @@ int main(void) {
 #-----------------------------------
   def test_defvar(self):
     self.input = \
-'''
+r'''
 int main(void) {
   int a, b, c;
 }
@@ -41,7 +32,7 @@ int main(void) {
 #-----------------------------------
   def test_blocks(self):
     self.input = \
-'''
+r'''
 int main(void) {
   int a, b, c;
   a = 1;
@@ -64,7 +55,7 @@ int main(void) {
 #-----------------------------------
   def test_expr(self):
     self.input = \
-'''
+r'''
 int main(void) {
   return (((1 + 2) * 3) / 4) % 5 - 6;
 }
@@ -75,7 +66,7 @@ int main(void) {
 #-----------------------------------
   def test_exprvar(self):
     self.input = \
-'''
+r'''
 int main(void) {
   int a, b, c;
   a = 1;
@@ -90,7 +81,7 @@ int main(void) {
 #-----------------------------------
   def test_bool(self):
     self.input = \
-'''
+r'''
 int main(void) {
   return 1 < 2 <= 3 > 4 >= 5 == 6 != 7 && 8 || !9 ;
 }
@@ -101,7 +92,7 @@ int main(void) {
 #-----------------------------------
   def test_boolvar(self):
     self.input = \
-'''
+r'''
 int main(void) {
   int a,b,c;
   a = 2;
@@ -116,7 +107,7 @@ int main(void) {
 #-----------------------------------
   def test_cast(self):
     self.input = \
-'''
+r'''
 int main(void) {
   int x;
   char c;
@@ -138,7 +129,7 @@ int main(void) {
 #-----------------------------------
   def test_call(self):
     self.input = \
-'''
+r'''
 
 int f (int x, char c, string s) {
   int y;
@@ -175,7 +166,7 @@ int main(void) {
 #-----------------------------------
   def test_fce(self):
     self.input = \
-'''
+r'''
 string s(string);
 
 int i(int);
@@ -202,7 +193,7 @@ int i(int x) {
 #-----------------------------------
   def test_fce2(self):
     self.input = \
-'''
+r'''
 int x(int a, int b) {
    int d, e, f;
    d = e;
@@ -225,7 +216,7 @@ int main(void) {
 #-----------------------------------
   def test_infinite(self):
     self.input = \
-'''
+r'''
 int i(int x) {
   return i(x);
 }
@@ -235,11 +226,13 @@ int main(void) {
   i = i(5);
 }
 '''
-
+    self.output = Error.OK
+    self.execute()
+    
 #-----------------------------------
   def test_recursion(self):
     self.input = \
-'''
+r'''
 // Returns sum of 5+4+3+2+1+0
 
 int i(int x) {
@@ -256,4 +249,55 @@ int main(void) {
   i = i(5);
 }
 '''
+    self.output = Error.OK
+    self.execute()
 
+#-----------------------------------
+  def test_print(self):
+    self.input = \
+r'''
+int main(void) {
+  print("TEST 1\n");
+  print("TEST 2\n", "TEST 3\n", "TEST 4\n");
+}
+'''
+    self.output = Error.OK
+    self.execute()
+    
+#-----------------------------------
+  def test_print2(self):
+    self.input = \
+r'''
+int main(void) {
+  int a;
+  char b;
+  string c;
+  
+  print(a, b, c);
+  
+  a = 1;
+  b = '2';
+  c = "3456789";
+  print(a, b, c);
+}
+'''
+    self.output = Error.OK
+    self.execute()    
+
+
+#-----------------------------------
+  def test_print3(self):
+    self.input = \
+r'''
+int main(void) {
+  print("\"");
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+   
+   
+   
+   
+# end of file

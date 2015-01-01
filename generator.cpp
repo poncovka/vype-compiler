@@ -55,7 +55,8 @@ string Generator::allocateVariables(list<VariableTable*> variables) {
 
 		for (map<string, Variable*>::iterator j = variables.symtable.begin(); j != variables.symtable.end(); ++j) {
 			Variable &variable = *(j->second);
-			address_table.insert(make_pair(&variable, stack.sp)); // ToDo: Adresa by měla být $fp + ofset (asi)!
+			unsigned offset = stack.fp - stack.sp;
+			address_table.insert(make_pair(&variable, "$fp + " + offset)); // ToDo: Adresa by měla být $fp + ofset (asi)!
 
 			if (variable.type == Symtable::TINT || variable.type == Symtable::TSTRING) {
 				stack.push(4); // 4B

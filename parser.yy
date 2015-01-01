@@ -132,6 +132,7 @@ stmt:
     '}'                                   {$$ = driver.genWhile($3, $7);} 
     
   | RETURN expr ';'                       {$$ = driver.genReturn($2);}
+  | RETURN ';'                            {$$ = driver.genReturn();}
   ;
 
 expr:

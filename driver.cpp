@@ -287,7 +287,10 @@ void Driver::enterFunc(string *id, Symtable::Type type) {
 void Driver::leaveFunc(string *id, InstructionList *l) {
   
   Function *func = symtable.actualFunction;
+  Label *label = new Label(func);
+  
   func->instructions.splice(func->instructions.begin(), *l);
+  func->instructions.push_front(label);
   
   symtable.leaveBlock();
   
@@ -645,6 +648,24 @@ InstructionList* Driver::genCall(string *id, ExpressionList *lexpr) {
   return inst;
 }
 
+InstructionList* Driver::genReturn() {
+
+  InstructionList *inst = new InstructionList();
+  
+  if (symtable.actualFunction->type != Symtable::VOID) {
+    ERROR(Error::SEM, "semantic error, function " << symtable.actualFunction->id 
+    << " does returns void");     
+  }
+  else {
+    ReturnInst *i = new ReturnInst();
+    i->result = NULL;
+    inst->push_back(i);
+  }
+  
+  return inst;
+}
+
+
 InstructionList* Driver::genReturn(Expression *expr) {
 
   InstructionList *inst = new InstructionList();
@@ -674,8 +695,8 @@ InstructionList* Driver::genWhile(Expression *expr, InstructionList *l) {
     << Symtable::str(expr->var->type)); 
   }
   else {
-    Label *start = new Label();
-    Label *end = new Label();
+    Label *start = new Label("WHILE_");
+    Label *end = new Label("WHILE_END_");
   
     JumpFalseInst *jumpif = new JumpFalseInst();
     jumpif->cond = expr->var;
@@ -707,8 +728,8 @@ InstructionList* Driver::genCondition(Expression *expr, InstructionList *l1, Ins
     << Symtable::str(expr->var->type))
   }
   else {
-    Label *middle = new Label();
-    Label *end   = new Label();
+    Label *middle = new Label("IF_FALSE_");
+    Label *end   = new Label("IF_END_");
   
     JumpFalseInst *jumpif = new JumpFalseInst();
     jumpif->cond = expr->var;

@@ -15,10 +15,18 @@
 
 int Label::maxid = 0;
 
-Label::Label() {
+Label::Label(const string &prefix) {
 	std::stringstream stream;
-	stream << "L" << Label::maxid++;
-	stream.str(this->id);
+	stream << prefix << Label::maxid++;
+	this->id = stream.str();
+	stream.str("");
+}
+
+Label::Label(Function *f) {
+	std::stringstream stream;
+	stream << "FUNC_" << f->id;
+	this->id = stream.str();
+	stream.str("");
 }
 
 Label::Label(const Label &label) {
@@ -33,7 +41,7 @@ string Label::str() {
 
 string Label::generate(Generator* g) {
     stringstream ss;
-    ss << "label" << id << ":\n";
+    ss << "label " << id << ":\n";
     return ss.str();
 }
 
@@ -225,7 +233,12 @@ CallInst::~CallInst() {
 
 string ReturnInst::str() {
 	std::stringstream stream;
-	stream << "return " << result->id;
+	stream << "return";
+	
+	if (result != NULL) {
+		stream << " " << result->id;
+	}
+
 	return stream.str();
 }
 

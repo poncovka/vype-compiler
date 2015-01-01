@@ -30,7 +30,8 @@ public:
 	string str();
 	string generate(Generator* g);
 
-	Label();
+	Label(Function *f);
+  Label(const string &prefix);
 	Label(const Label &label);
 
 	virtual Instruction* ptr() {

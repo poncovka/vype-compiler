@@ -1,0 +1,62 @@
+&\multicolumn{5}{l}{{G = (N, T, P, S), kde:}} \smallskip \\ 
+
+&\multicolumn{5}{p{17cm}}{{N = \{ \LT program\GT, \LT functions\GT, \LT fce\_declaration\GT, \LT fce\_definition\GT, \LT stmt\_list\GT, \LT stmt\GT, \LT type\GT, \LT datatype\GT,\LT datatype\_list\GT, \LT id\_list\GT, \LT param\_list\GT, \LT argument\_list\GT, \LT expr\_list\GT   \} }} \smallskip \\ 
+
+&\multicolumn{5}{l}{{T = \{ $($, $)$, $\{$, $\}$, $\textit{;}$ , id, $\textit{,}$ , =, if, else, while, return, void, int, char, string \}}} \smallskip \\ 
+
+&\multicolumn{5}{l}{{S = \LT program\GT}} \smallskip \\ 
+
+&P = \{ \\
+
+&&\LT program\GT &$\longrightarrow$& & \LT functions\GT \\
+
+&&\LT functions\GT &$\longrightarrow$& & $\epsilon$ \\
+&&  &  & $|$ & \LT fce\_declaration\GT \LT functions\GT \\
+&&  &  & $|$ & \LT fce\_definition\GT \LT functions\GT \\
+
+&&\LT fce\_declaration\GT &$\longrightarrow$& & \LT type\GT id (void) ; \\
+&&  &  & $|$ & \LT type\GT id (\LT datatype\_list\GT) ; \\
+
+
+&&\LT fce\_definition\GT &$\longrightarrow$& & \LT type\GT id (void) \{\LT stmt\_list\GT \}\\
+&&  &  & $|$ & \LT type\GT id (\LT param\_list\GT) \{\LT stmt\_list\GT \} \\
+
+
+&&\LT stmt\_list\GT &$\longrightarrow$& & $\epsilon$ \\
+&&  &  & $|$ & \{\LT stmt\_list\GT\} \\
+&&  &  & $|$ & \LT stmt\GT \LT stmt\_list\GT \\
+
+&&\LT stmt\GT &$\longrightarrow$& & \LT datatype\GT \LT id\_list\GT ; \\
+&&  &  & $|$ & id = expr; \\
+&&  &  & $|$ & id (\LT argument\_list\GT); \\
+&&  &  & $|$ & if (expr) \{\LT stmt\_list\GT \} else \{\LT stmt\_list\GT \} \\
+&&  &  & $|$ & while (expr) \{\LT stmt\_list\GT \} \\
+&&  &  & $|$ & return expr; \\
+&&  &  & $|$ & return; \\
+
+&&\LT type\GT &$\longrightarrow$& & void \\
+&&  &  & $|$ & \LT datatype\GT \\
+
+&&\LT datatype\GT &$\longrightarrow$& & int \\
+&&  &  & $|$ & char \\
+&&  &  & $|$ & string \\
+
+&&\LT datatype\_list\GT &$\longrightarrow$& & \LT datatype\GT \\
+&&  &  & $|$ & \LT datatype\GT, \LT datatype\_list\GT \\
+
+&&\LT id\_list\GT &$\longrightarrow$& & id \\
+&&  &  & $|$ & id, \LT id\_list\GT \\
+ 
+&&\LT param\_list\GT &$\longrightarrow$& & \LT datatype\GT id \\
+&&  &  & $|$ & \LT datatype\GT id, \LT param\_list\GT \\
+  
+&&\LT argument\_list\GT &$\longrightarrow$& & $\epsilon$ \\
+&&  &  & $|$ & \LT expr\_list\GT \\
+
+&&\LT expr\_list\GT &$\longrightarrow$& & expr \\
+&&  &  & $|$ & expr, \LT expr\_list\GT \\
+
+
+
+
+&\} \\

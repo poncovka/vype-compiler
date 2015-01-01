@@ -38,7 +38,7 @@ string Stack::pop(unsigned i)
 
 Generator::Generator(): stack (8192)
 {
-    data = ".data\n";
+    data = "\n.data\n";
     data_counter = 0;
 }
 
@@ -49,6 +49,9 @@ string Generator::run(FunctionTable& functions)
 
     for (map<string, Function*>::iterator i = functions.symtable.begin(); i != functions.symtable.end(); ++i)
     {
+        stack.fp = stack.size;
+        stack.sp = stack.size;
+        
         Function &f = *(i->second);
         allocateVariables(f.variables);
 

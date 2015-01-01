@@ -24,13 +24,11 @@ class Stack
 public:
     int sp;
     int fp;
+    unsigned size;
 
     Stack(unsigned size);
     string push(unsigned i);
-    string pop(unsigned i);
-
-private:
-    unsigned size;
+    string pop(unsigned i);  
 };
 
 class Generator

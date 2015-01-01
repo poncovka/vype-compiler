@@ -38,10 +38,11 @@ lexer.c: lexer.l
 	flex -olexer.c lexer.l
 
 parser.tab.cc parser.tab.hh: parser.yy
-	bison -vd --report='all' parser.yy
+	bison -vd --report='all' -Wno-other parser.yy
 
 clean:
 	rm -f vype \
+	*.o \
 	lexer.c parser.tab.c parser.tab.cc parser.tab.hh \
 	lexer.o parser.tab.o parser.output \
 	location.hh position.hh stack.hh

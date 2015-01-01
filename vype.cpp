@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
           // generating
           Generator generator;
           string mips = generator.run(driver.symtable.functions);
-		      cout << mips;
+		      DEBUG(mips);
           fclose(out);
         } 
       }    

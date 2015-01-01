@@ -58,6 +58,14 @@
 
 %start program
 
+%destructor { } <ival>
+%destructor { } <tval>
+%destructor { delete $$; } <sval>
+%destructor { delete $$; } <eval>
+%destructor { freeExpressions(*$$);  delete $$; } <leval>
+%destructor { freeInstructions(*$$); delete $$; } <inst>
+%destructor { freeVariables(driver.variables);  } <>
+
 %{
   extern int yylex(yy::parser::semantic_type *yylval,
                    yy::parser::location_type *yylloc,

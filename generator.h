@@ -15,6 +15,7 @@
 #include <string>
 #include <typeinfo>
 #include "symtable.h"
+#include "error.h"
 
 using namespace std;
 

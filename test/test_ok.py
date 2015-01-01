@@ -64,6 +64,46 @@ int main(void) {
     self.execute()
 
 #-----------------------------------
+  def test_expr2(self):
+    self.input = \
+r'''
+int main(void) {
+  return (((1) * 3) / 4) % 5 - 6;
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+#-----------------------------------
+  def test_expr3(self):
+    self.input = \
+r'''
+int main(void) {
+  int a;
+  char c;
+  string s;
+  return (a == 1) && (c == 'x') && (s == "abcde");
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+#-----------------------------------
+  def test_expr4(self):
+    self.input = \
+r'''
+int main (void) {
+  int a;
+  char c;
+  string s;
+  
+  a = 3 + (int)'c'/2;
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+#-----------------------------------
   def test_exprvar(self):
     self.input = \
 r'''
@@ -296,8 +336,68 @@ int main(void) {
     self.output = Error.OK
     self.execute()
 
+#-----------------------------------
+  def test_apostroph(self):
+    self.input = \
+r'''
+int main(void) {
+  char c;
+  c = '\'';
+}
+'''
+    self.output = Error.OK
+    self.execute()    
    
-   
-   
-   
+#-----------------------------------
+  def test_emptystr(self):
+    self.input = \
+r'''
+int main(void) {
+  string s;
+  s = "";
+}
+'''
+    self.output = Error.OK
+    self.execute()    
+
+#-----------------------------------
+  def test_decl(self):
+    self.input = \
+r'''
+
+string f (int a, char b, string s) {
+  if (a > (int)b) {
+    return s;
+  }
+  else {
+    return "";
+  }
+}
+
+int main (void) {
+  print(f(1,'a', "abcd"));
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+#-----------------------------------
+  def test_decl2(self):
+    self.input = \
+r'''
+
+string f (int, char, string);
+
+string f (int a, char b, string s) {
+  return s;
+}
+
+int main (void) {
+  print(f(1,'a', "abcd"));
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+  
 # end of file

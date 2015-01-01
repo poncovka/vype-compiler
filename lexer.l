@@ -18,6 +18,9 @@ typedef yy::parser::token token;
 %}
 %x COMMENT
 
+CHAR   [\x20-\x21\x23-\x26\x28-\x5b\x5d-\xff] 
+ESC    (\\\\|\\n|\\t|\\\"|\\')
+
 %%
 
 %{
@@ -61,9 +64,15 @@ typedef yy::parser::token token;
 "while"                 { return token::WHILE; }
 "return"                { return token::RETURN; }
 
+"break"    |
+"continue" |
+"for"      |
+"short"    |
+"unsigned"              { return token::KEYWORD; }
+
 [0-9]+	                { yylval->ival = atoi(yytext); return token::NUM; }
-'(\\.|[^\\'])+'         { yylval->sval = new std::string(yytext); return token::CHAR; }
-\"(\\.|[^\\"])*\"       { yylval->sval = new std::string(yytext); return token::STRING; }
+'({CHAR}|{ESC}|\"|\\)'  { yylval->sval = new std::string(yytext); return token::CHAR; }
+\"({CHAR}|{ESC})*\"     { yylval->sval = new std::string(yytext); return token::STRING; }
 [a-zA-Z_][a-zA-Z0-9_]*	{ yylval->sval = new std::string(yytext); return token::ID; }
 
 "//".*                  ;

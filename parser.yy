@@ -5,7 +5,7 @@
 %debug
 
 %define parser_class_name "parser"
-/* %define parse.error verbose */
+%define parse.error verbose
 
 %code requires{
   #include "symtable.h"
@@ -40,7 +40,7 @@
 
 %token ';' '{' '}' '='
 %token VOID TINT TCHAR TSTR
-%token IF ELSE WHILE RETURN
+%token IF ELSE WHILE RETURN KEYWORD
 
 %left OR
 %left AND

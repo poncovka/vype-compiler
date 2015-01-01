@@ -71,6 +71,7 @@ class Driver {
   InstructionList* genAssignment(string *id, Expression *expr);
   InstructionList* genCall(string *id, ExpressionList *lexpr);
   InstructionList* genReturn(Expression *expr);
+  InstructionList* genReturn();
   InstructionList* genWhile(Expression *expr, InstructionList *l);
   InstructionList* genCondition(Expression *expr, InstructionList *l1, InstructionList *l2);
 

@@ -11,7 +11,7 @@ class ExamplesTestCase(TestCase):
 #-----------------------------------
   def test_factorial(self):
     self.input = \
-'''
+r'''
 
 /* Program 1: Vypocet faktorialu (iterativne) */
 int main(void) { // Hlavni telo programu
@@ -39,7 +39,7 @@ int main(void) { // Hlavni telo programu
 #-----------------------------------
   def test_recursion(self):
     self.input = \
-'''
+r'''
 
 /* Program 2: Vypocet faktorialu (rekurzivne) */
 
@@ -87,7 +87,7 @@ int main(void)
 #-----------------------------------
   def test_string(self):
     self.input = \
-'''
+r'''
 
 /* Program 3: Prace s retezci a vestavenymi funkcemi */
 
@@ -98,7 +98,7 @@ int main(void) { //Hlavni telo programu
   str1 = "Toto je nejaky text";
   str2 = strcat(str1, ", ktery jeste trochu obohatime");
   
-  print(str1, ’\n’, str2, "\n");
+  print(str1, '\n', str2, "\n");
   str1 = read_string();
   
   while ((int)(get_at(str1, p)) != 0)
@@ -106,9 +106,8 @@ int main(void) { //Hlavni telo programu
     p = p + 1;
   }
   print("\nDelka retezce \"", str1, "\", je ", p, " znaku.\n");
-  
+   
 }
-
 '''
     self.output = Error.OK
     self.execute()

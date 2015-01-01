@@ -9,11 +9,3 @@ from base import TestCase, Error
 class CodeGenTestCase(TestCase):
   prefix = 'gen'
 
-#
-#  def test_???(self):
-#    self.input = \
-#'''
-#'''
-#    self.output = Error.CODEGEN
-#    self.execute()
-#

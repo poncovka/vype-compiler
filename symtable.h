@@ -45,7 +45,7 @@ class Instruction {
 public:
 	virtual ~Instruction() {};
   virtual string str() {};
-	virtual string generate(Generator *generator){};
+	virtual string generate(Generator *g){return "";};
 };
 
 typedef std::list<Instruction*> InstructionList;

@@ -12,12 +12,11 @@
 #ifndef _INSTRUCTION_H_
 #define _INSTRUCTION_H_
 
+#include <string>
 #include "symtable.h"
 #include "generator.h"
 
-//////////////////////////////////// base class
-
-
+using namespace std;
 
 //////////////////////////////////// label
 
@@ -28,10 +27,14 @@ private:
 public:
 	string id;
 	string str();
+	string generate(Generator* g);
 
 	Label();
 	Label(const Label &label);
-  virtual Instruction* ptr() {return this;}
+
+	virtual Instruction* ptr() {
+		return this;
+	}
 };
 
 //////////////////////////////////// result = a op b
@@ -43,8 +46,11 @@ public:
 	Variable *result;
 	Symtable::Operator op;
 	string str();
-	
-	ExpressionInst* ptr() {return this;}
+	string generate(Generator* g);
+
+	ExpressionInst* ptr() {
+		return this;
+	}
 };
 
 //////////////////////////////////// result = (type) a
@@ -55,8 +61,11 @@ public:
 	Variable *result;
 	Symtable::Type type;
 	string str();
+	string generate(Generator* g);
 
-	CastInst* ptr() {return this;}
+	CastInst* ptr() {
+		return this;
+	}
 };
 
 //////////////////////////////////// a = value
@@ -65,8 +74,11 @@ class LoadInst : public Instruction {
 public:
 	Variable *result;
 	string str();
+	string generate(Generator* g);
 
-	LoadInst* ptr() {return this;}
+	LoadInst* ptr() {
+		return this;
+	}
 };
 
 //////////////////////////////////// a = b;
@@ -76,6 +88,7 @@ public:
 	Variable *var;
 	Variable *result;
 	string str();
+	string generate(Generator* g);
 };
 
 //////////////////////////////////// goto a
@@ -84,7 +97,7 @@ class JumpInst : public Instruction {
 public:
 	Label *label;
 	string str();
-
+	string generate(Generator* g);
 };
 
 //////////////////////////////////// if not a then goto b
@@ -94,7 +107,7 @@ public:
 	Variable *cond;
 	Label *label;
 	string str();
-
+	string generate(Generator* g);
 };
 
 //////////////////////////////////// a = func(b,c)
@@ -105,6 +118,7 @@ public:
 	list<Variable*> args;
 	Variable *result;
 	string str();
+	string generate(Generator* g);
 
 	~CallInst();
 };
@@ -115,7 +129,7 @@ class ReturnInst : public Instruction {
 public:
 	Variable *result;
 	string str();
-
+	string generate(Generator* g);
 };
 
 #endif

@@ -2,7 +2,7 @@
 # Authors: Vendula Poncová, xponco00
 #          xxx
 
-CFLAGS = -g
+CFLAGS = -g 
 .PHONY: clean test
 
 all:	vype

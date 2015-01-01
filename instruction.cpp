@@ -53,9 +53,9 @@ string ExpressionInst::generate(Generator* g) { // result = a op b
 	string rd, rs, rt;
 	string mips = "";
 
-	rd = g->address_table.find(result)->second;
-	rs = g->address_table.find(var1)->second;
-	rt = g->address_table.find(var2)->second;
+	rd = (g->address_table.find(result))->second;
+	rs = (g->address_table.find(var1))->second;
+	rt = (g->address_table.find(var2))->second;
 
 	if (op == Symtable::ADD) { // rd ← rs + rt ~ ADD rd, rs, rt
 		mips = "LW 4$," + rs + "\n" +
@@ -166,7 +166,7 @@ string JumpInst::str() {
 }
 
 string JumpInst::generate(Generator * generator) { // goto a
-	return "J " + str() + "\n";
+	return "J " + label->id + "\n";
 }
 
 //////////////////////////////////// JumpFalseInst
@@ -178,7 +178,7 @@ string JumpFalseInst::str() {
 }
 
 string JumpFalseInst::generate(Generator * generator) { // if not a then goto b
-	string mips = "JF\n";
+	string mips = "JF " + label->id + "\n";
 	return mips;
 }
 

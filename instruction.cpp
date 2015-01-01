@@ -32,7 +32,9 @@ string Label::str() {
 }
 
 string Label::generate(Generator* g) {
-	return str() + ":\n";
+    stringstream ss;
+    ss << "label" << id << ":\n";
+    return ss.str();
 }
 
 //////////////////////////////////// ExpressionInst

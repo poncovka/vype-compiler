@@ -19,28 +19,32 @@
 
 using namespace std;
 
-class Stack {
+class Stack
+{
 public:
-	int sp;
-	int fp;
-	
-	Stack(unsigned size);
-	string push(unsigned i);
-	string pop(unsigned i);
+    int sp;
+    int fp;
+
+    Stack(unsigned size);
+    string push(unsigned i);
+    string pop(unsigned i);
 
 private:
-	int size;
+    unsigned size;
 };
 
-class Generator {
+class Generator
+{
 public:
-	Generator();
-	string run(FunctionTable &functions);
-	Stack stack;
-	map<Variable*, string> address_table;
-	string allocateVariables(list<VariableTable*> var_table);
+    Generator();
+    string run(FunctionTable &functions);
+    Stack stack;
+    map<Variable*, string> address_table;
+    string data;
+    unsigned data_counter;
+    string allocateVariables(list<VariableTable*> var_table);
 
-//	isAddressable(Instruction i);
+    //	isAddressable(Instruction i);
 
 };
 

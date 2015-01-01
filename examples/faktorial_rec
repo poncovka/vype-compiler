@@ -5,7 +5,7 @@ int factorial (int);
 int factorial (int n) {
 	int decremented_n;
 	int temp_result;
-	
+
 	if (n < 2) {
 		return 1;
 	} else {

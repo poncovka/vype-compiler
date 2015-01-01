@@ -25,8 +25,8 @@ public:
 	int fp;
 	
 	Stack(unsigned size);
-	void push(unsigned i);
-	void pop(unsigned i);
+	string push(unsigned i);
+	string pop(unsigned i);
 
 private:
 	int size;

@@ -18,14 +18,22 @@ Stack::Stack(unsigned size)
     fp = size;
 }
 
-void Stack::push(unsigned i)
+string Stack::push(unsigned i)
 {
     sp -= i;
+    
+    stringstream mips;
+    mips << "ADDI $sp,$sp," << -i << "\n";
+    return mips;
 }
 
-void Stack::pop(unsigned i)
+string Stack::pop(unsigned i)
 {
     sp += i;
+    
+    stringstream mips;
+    mips << "ADDI $sp,$sp," << i << "\n";
+    return mips;
 }
 
 Generator::Generator() : stack(8192)
@@ -39,7 +47,6 @@ string Generator::run(FunctionTable& functions)
     for (map<string, Function*>::iterator i = functions.symtable.begin(); i != functions.symtable.end(); ++i)
     {
         Function &f = *(i->second);
-
         allocateVariables(f.variables);
 
         for (list<Instruction*>::iterator l = f.instructions.begin(); l != f.instructions.end(); ++l)
@@ -69,6 +76,7 @@ string Generator::allocateVariables(list<VariableTable*> variables)
         for (map<string, Variable*>::iterator j = variables.symtable.begin(); j != variables.symtable.end(); ++j)
         {
             Variable &variable = *(j->second);
+
             unsigned offset = stack.fp - stack.sp;
             ss.str("");
             ss << "$fp + " << offset;

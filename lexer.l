@@ -1,4 +1,4 @@
-%option noyywrap batch debug nounput
+%option noyywrap batch nounput
 
 %{
 

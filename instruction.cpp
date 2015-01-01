@@ -263,7 +263,18 @@ string ExpressionInst::generate(Generator* g)
     }
     else if (op == Symtable::NEG)
     {
-        mips << "NEG" << endl;
+        Label ltrue("NEG_TRUE_");
+        Label lend("NEG_END_");
+
+        mips << "lw  $4, " << rs << " // OR" << endl <<
+                "li  $10, 0" << endl <<
+                "li  $11, 1" << endl <<
+                "beq $4, $10, " << ltrue.id << endl <<
+                "sw  $11, " << rd << endl <<
+                "b " << lend.id << endl <<
+                ltrue.id << ":" << endl <<
+                "sw  $10, " << rd << endl <<
+                lend.id << ":" << endl;
     }
 
     return mips.str();

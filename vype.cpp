@@ -10,6 +10,7 @@
  */
 
 #include <iostream>
+#include <fstream>  
 #include <cstdio>
 #include "parser.tab.hh"
 #include "driver.h"
@@ -52,8 +53,12 @@ int main(int argc, char **argv) {
         
           // generating
           Generator generator;
+          
           string mips = generator.run(driver.symtable.functions);
+          
 		      DEBUG(mips);    
+		      fprintf(out, "%s", mips.c_str());
+		      
           fclose(out);
         } 
       }    

@@ -445,5 +445,38 @@ int main (void) {
     self.execute()
 
 #-----------------------------------
+  def test_void(self):
+    self.input = \
+r'''
+
+void f (int a, char b, string s) {
+  return;
+}
+
+int main (void) {
+  int a;
+  a = f(1,'a', "abcd");
+}
+'''
+    self.output = Error.SEMANTIC
+    self.execute()
+
+#-----------------------------------
+  def test_noparam(self):
+    self.input = \
+r'''
+
+string f (void) {
+  return "TEST";
+}
+
+int main (void) {
+  int a;
+  print(f(a));
+}
+'''
+    self.output = Error.SEMANTIC
+    self.execute()
+
 
 

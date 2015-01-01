@@ -399,5 +399,38 @@ int main (void) {
     self.output = Error.OK
     self.execute()
 
+#-----------------------------------
+  def test_void(self):
+    self.input = \
+r'''
+
+void f (int a, char b, string s) {
+  return;
+}
+
+int main (void) {
+  f(1,'a', "abcd");
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+#-----------------------------------
+  def test_noparam(self):
+    self.input = \
+r'''
+
+string f (void) {
+  return "TEST";
+}
+
+int main (void) {
+  print(f());
+}
+'''
+    self.output = Error.OK
+    self.execute()
+
+
   
 # end of file

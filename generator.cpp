@@ -46,11 +46,11 @@ Generator::Generator() : stack(8192)
 
 string Generator::run(FunctionTable& functions)
 {
-    stringstream mips;
-    mips << ".text" << endl <<
+    stringstream mips, func, header;
+    header << ".text" << endl <<
             ".org 0" << endl <<
-            "LI $sp," << stack.size << endl <<
-            "LI $fp," << stack.size << endl <<
+            "li $sp," << stack.size << endl <<
+            "li $fp," << stack.size << endl <<
             "jal main" << endl <<
             "BREAK" << endl;
 
@@ -64,12 +64,15 @@ string Generator::run(FunctionTable& functions)
 
         for (list<Instruction*>::iterator l = f.instructions.begin(); l != f.instructions.end(); ++l)
         {
-            mips << string((*l)->generate(this));
+            func << string((*l)->generate(this));
+            
+            if (f.id == "main") {
+                func << "jr $ra // Return" << endl;
+            }
         }
     }
 
-    mips << data << endl;
-
+    mips << header.str() << func.str() << data << endl;
     return mips.str();
 }
 
@@ -92,9 +95,9 @@ string Generator::allocateVariables(list<VariableTable*> variables)
         {
             Variable &variable = *(j->second);
 
-            unsigned offset = stack.fp - stack.sp;
+            int offset = stack.sp - stack.fp;
             ss.str("");
-            ss << "-" << offset << "($fp)";
+            ss << offset << "($fp)";
             address_table.insert(make_pair(&variable, ss.str()));
 
             if (variable.type == Symtable::TINT || variable.type == Symtable::TSTRING)

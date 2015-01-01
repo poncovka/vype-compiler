@@ -26,7 +26,14 @@ Label::Label(const string &prefix)
 Label::Label(Function *f)
 {
     std::stringstream stream;
-    stream << "FUNC_" << f->id;
+
+    if (f->id != "main")
+    {
+        stream << "FUNC_";
+    }
+
+    stream << f->id;
+
     this->id = stream.str();
     stream.str("");
 }
@@ -198,18 +205,20 @@ string LoadInst::generate(Generator * g)
 
     if (result->type == Symtable::TINT)
     {
-        data << "const_" << g->data_counter << ":" << endl <<
+        data << "const_" << g->data_counter << ":" <<
                 "\t" << ".word " << result->ival << endl;
 
-        mips << "lw $3, const_" << g->data_counter << " // Load int" << endl <<
+        mips << "la $7, const_" << g->data_counter << " // Load int" << endl <<
+                "lw $3, ($7)" << endl <<
                 "sw $3, " << address << endl;
     }
     else if (result->type == Symtable::TCHAR)
     {
-        data << "const_" << g->data_counter << ":" << endl <<
-                "\t" << ".byte " << result->sval << endl;
+        data << "const_" << g->data_counter << ":\t" <<
+                ".byte " << result->sval << endl;
 
-        mips << "lb $3, const_" << g->data_counter << " // Load char" << endl <<
+        mips << "la $3, const_" << g->data_counter << " // Load char" << endl <<
+                "lb $3, ($7)" << endl <<
                 "sb $3, " << address << endl;
     }
     else if (result->type == Symtable::TSTRING)
@@ -218,15 +227,15 @@ string LoadInst::generate(Generator * g)
         sval.erase(0, 1);
         sval.erase(sval.size() - 1);
 
-        data << "const_" << g->data_counter << ":" << endl << 
-                "\t" << ".asciz " << "\"" << sval << "\\0\"" << endl;
+        data << "const_" << g->data_counter << ":\t" <<
+                ".asciz " << "\"" << sval << "\\0\"" << endl;
 
-        mips << "la $3, const_" << g->data_counter << " // Load string" << endl <<// Get string address
+        mips << "la $3, const_" << g->data_counter << " // Load string" << endl << // Get string address
                 "sw $3, " << address << endl;
     }
 
     g->data_counter++;
-    
+
     g->data += data.str();
     return mips.str();
 }
@@ -257,7 +266,7 @@ string AssignmentInst::generate(Generator * g)
         mips << "lb $3, " << var1 << " // Assign char" << endl <<
                 "sb $3, " << res << endl;
     }
-    
+
     return mips.str();
 }
 
@@ -326,10 +335,43 @@ string CallInst::str()
 string CallInst::generate(Generator * g)
 { // a = func(b,c)
     stringstream mips;
-    // Jump s tím, že musím uložit na zásobník SP a FP a takové ty srandy.
-    mips << "jal " << fce->id << " // Call" << endl;
-    mips << g->stack.push(4); // Allocate 4B for $ra
-    mips << "sw $ra, ($sp)" << endl; // Store $ra to stack
+
+    if (fce->id == "print")
+    {
+        for (list<Variable*>::iterator i = args.begin(); i != args.end(); ++i)
+        {
+            Variable* var = *i;
+            string address = g->address_table.find(var)->second;
+
+            if (var->type == Symtable::TINT)
+            {
+                mips << "lw $9, " << address << "" << endl <<
+                        "print_int $9" << endl;
+            }
+            else if (var->type == Symtable::TCHAR)
+            {
+                mips << "lb $9, " << address << "" << endl <<
+                        "print_char $9" << endl;
+            }
+            else if (var->type == Symtable::TSTRING)
+            {
+                mips << "lw $9, " << address << "" << endl <<
+                        "print_string $9" << endl;
+            }
+        }
+    }
+    else if (fce->id == "main")
+    {
+        mips << g->stack.push(4); // Allocate 4B for $ra
+        mips << "sw $ra, ($fp)" << endl; // Store $ra to stack
+    }
+    else
+    {
+        // Jump s tím, že musím uložit na zásobník SP a FP a takové ty srandy.
+        mips << "jal " << fce->id << " // Call" << endl;
+        mips << g->stack.push(4); // Allocate 4B for $ra
+        mips << "sw $ra, ($sp)" << endl; // Store $ra to stack
+    }
 
     return mips.str();
 }

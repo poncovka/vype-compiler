@@ -46,7 +46,7 @@ string Label::str()
 string Label::generate(Generator* g)
 {
     stringstream ss;
-    ss << "\n" << id << ":\n";
+    ss << endl << id << ":" << endl;
     return ss.str();
 }
 
@@ -71,7 +71,7 @@ string ExpressionInst::str()
 string ExpressionInst::generate(Generator* g)
 { // result = a op b
     string rd, rs, rt;
-    string mips = "";
+    stringstream mips;
 
     rd = (g->address_table.find(result))->second;
     rs = (g->address_table.find(var1))->second;
@@ -79,89 +79,89 @@ string ExpressionInst::generate(Generator* g)
 
     if (op == Symtable::ADD)
     { // rd ← rs + rt ~ ADD rd, rs, rt
-        mips = "LW 4$, " + rs + "\n" +
-                "LW 5$, " + rt + "\n" +
-                "ADD $3, $4, $5\n" +
-                "SW $3, " + rd + "\n";
+        mips << "lw $4, " << rs << " // ADD" << endl <<
+                "lw $5, " << rt << endl
+                "add $3, $4, $5" << endl <<
+                "sw $3, " << rd << endl;
 
     }
     else if (op == Symtable::SUB)
     { // rd ← rs - rt ~ SUB rd, rs, rt
-        mips = "LW 4$, " + rs + "\n" +
-                "LW 5$, " + rt + "\n" +
-                "SUB $3, $4, $5\n" +
-                "SW $3, " + rd + "\n";
+        mips << "lw $4, " << rs << " // SUB" << endl <<
+                "lw $5, " << rt << endl <<
+                "sub $3, $4, $5" << endl <<
+                "sw $3, " << rd << endl;
 
     }
     else if (op == Symtable::MUL)
     { // rd ← rs × rt ~ MUL rd, rs, rt
-        mips = "LW 4$, " + rs + "\n" +
-                "LW 5$, " + rt + "\n" +
-                "MUL $3, $4, $5\n" +
-                "SW $3, " + rd + "\n";
+        mips << "lw $4, " << rs << " // MUL" << endl <<
+                "lw $5, " << rt << endl <<
+                "mul $3, $4, $5" << endl
+                "sw $3, " << rd << endl;
 
     }
     else if (op == Symtable::DIV || op == Symtable::MOD)
     { // (HI, LO) ← rs / rt ~ DIV rs, rt
-        mips = "LW 4$, " + rs + "\n" +
-                "LW 5$, " + rt + "\n" +
-                "DIV $4, $5\n";
+        mips << "lw $4, " << rs << " // DIV" << endl <<
+                "lw $5, " << rt << endl <<
+                "div $4, $5" << endl;
 
         if (op == Symtable::DIV)
         {
-            mips += "MFLO $3\n" +
-                    string("SW $3, ") + rd + "\n";
+            mips << "mflo $3" << endl <<
+                    "sw $3, " << rd << endl;
         }
         else if (op == Symtable::MOD)
         {
-            mips += "MFHI $3\n" +
-                    string("SW $3, ") + rd + "\n";
+            mips << "mfhi $3" << endl <<
+                    "sw $3, " << rd << endl;
         }
 
     }
     else if (op == Symtable::LT)
     {
-        mips = "LT\n";
+        mips = "LT" + endl;
 
     }
     else if (op == Symtable::LTE)
     {
-        mips = "LTE\n";
+        mips = "LTE" + endl;
 
     }
     else if (op == Symtable::GT)
     {
-        mips = "GT\n";
+        mips = "GT" + endl;
 
     }
     else if (op == Symtable::GTE)
     {
-        mips = "GTE\n";
+        mips = "GTE" + endl;
 
     }
     else if (op == Symtable::EQ)
     {
-        mips = "EQ\n";
+        mips = "EQ" + endl;
 
     }
     else if (op == Symtable::NEQ)
     {
-        mips = "NEQ\n";
+        mips = "NEQ" + endl;
 
     }
     else if (op == Symtable::AND)
     {
-        mips = "AND\n";
+        mips = "AND" + endl;
 
     }
     else if (op == Symtable::OR)
     {
-        mips = "OR\n";
+        mips = "OR" + endl;
 
     }
     else if (op == Symtable::NEG)
     {
-        mips = "NEG\n";
+        mips = "NEG" + endl;
     }
 
     return mips;
@@ -177,7 +177,7 @@ string CastInst::str()
 
 string CastInst::generate(Generator * g)
 { // result = (type) a
-    string mips = "CAST\n";
+    string mips = "CAST" + endl;
     return mips;
 }
 
@@ -197,19 +197,19 @@ string LoadInst::generate(Generator * g)
 
     if (result->type == Symtable::TINT)
     {
-        data << "const_" << g->data_counter++ << ":\n" <<
-                "\t" << ".word " << result->ival << "\n";
+        data << "const_" << g->data_counter << ":" << endl <<
+                "\t" << ".word " << result->ival << endl;
 
-        mips << "LW $3, constr_" << g->data_counter << "\n" <<
-                "SW $3, " << address << "\n";
+        mips << "lw $3, const_" << g->data_counter << " // Load int" << endl <<
+                "sw $3, " << address << endl;
     }
     else if (result->type == Symtable::TCHAR)
     {
-        data << "const_" << g->data_counter++ << ":\n" <<
-                "\t" << ".byte " << result->sval << "\n";
+        data << "const_" << g->data_counter << ":" << endl <<
+                "\t" << ".byte " << result->sval << endl;
 
-        mips << "LB $3, constr_" << g->data_counter << "\n" <<
-                "SB $3, " << address << "\n";
+        mips << "lb $3, const_" << g->data_counter << " // Load char" << endl <<
+                "sb $3, " << address << endl;
     }
     else if (result->type == Symtable::TSTRING)
     {
@@ -217,13 +217,15 @@ string LoadInst::generate(Generator * g)
         sval.erase(0, 1);
         sval.erase(sval.size() - 1);
 
-        data << "const_" << g->data_counter++ << ":\n" <<
-                "\t" << ".asciz " << "\"" << sval << "\\0\"\n";
+        data << "const_" << g->data_counter << ":" << endl << 
+                "\t" << ".asciz " << "\"" << sval << "\\0\"" << endl;
 
-        mips << "LA $3, constr_" << g->data_counter << "\n" << // Get string address
-                "SW $3, " << address << "\n";
+        mips << "la $3, const_" << g->data_counter << " // Load string" << endl <<// Get string address
+                "sw $3, " << address << endl;
     }
 
+    g->data_counter++;
+    
     g->data += data.str();
     return mips.str();
 }
@@ -237,10 +239,25 @@ string AssignmentInst::str()
     return stream.str();
 }
 
-string AssignmentInst::generate(Generator * generator)
+string AssignmentInst::generate(Generator * g)
 { // a = var
-    string mips = "ASSIGN\n";
-    return mips;
+    stringstream mips;
+    string res, var1;
+    var1 = (g->address_table.find(var))->second;
+    res = (g->address_table.find(var))->second;
+
+    if (result->type == Symtable::TINT || result->type == Symtable::TSTRING)
+    {
+        mips << "lw $3, " << var1 << " // Assign " << Symtable::str(g->address_table.find(var)->first->type) << endl <<
+                "sw $3, " << res << endl;
+    }
+    else if (result->type == Symtable::TCHAR)
+    {
+        mips << "lb $3, " << var1 << " // Assign char" << endl <<
+                "sb $3, " << res << endl;
+    }
+    
+    return mips.str();
 }
 
 //////////////////////////////////// JumpInst
@@ -254,7 +271,7 @@ string JumpInst::str()
 
 string JumpInst::generate(Generator * generator)
 { // goto a
-    return "J " + label->id + "\n";
+    return "j " + label->id + " // Jump" + endl;
 }
 
 //////////////////////////////////// JumpFalseInst
@@ -266,9 +283,9 @@ string JumpFalseInst::str()
     return stream.str();
 }
 
-string JumpFalseInst::generate(Generator * generator)
+string JumpFalseInst::generate(Generator * g)
 { // if not a then goto b
-    string mips = "JFALSE " + label->id + "\n";
+    string mips = "JFALSE " + label->id + endl;
     return mips;
 }
 
@@ -306,9 +323,9 @@ string CallInst::generate(Generator * g)
 { // a = func(b,c)
     stringstream mips;
     // Jump s tím, že musím uložit na zásobník SP a FP a takové ty srandy.
-    mips << "JAL " << fce->id << "\n";
+    mips << "jal " << fce->id << " // Call" << endl;
     mips << g->stack.push(4); // Allocate 4B for $ra
-    mips << "SW $ra, ($sp)\n"; // Store $ra to stack
+    mips << "sw $ra, ($sp)" << endl; // Store $ra to stack
 
     return mips.str();
 }
@@ -333,9 +350,9 @@ string ReturnInst::str()
     return stream.str();
 }
 
-string ReturnInst::generate(Generator * generator)
+string ReturnInst::generate(Generator * g)
 { // return a
-    string mips = "JR $ra\n";
+    string mips = "jr $ra // Return" + endl;
     return mips;
 }
 

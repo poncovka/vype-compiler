@@ -21,37 +21,42 @@ Stack::Stack(unsigned size)
 string Stack::push(unsigned i)
 {
     sp -= i;
-    
+
     stringstream mips;
-    mips << "ADDI $sp,$sp,-" << i << "\n";
+    mips << "addi $sp,$sp,-" << i << endl;
     return mips.str();
 }
 
 string Stack::pop(unsigned i)
 {
     sp += i;
-    
+
     stringstream mips;
-    mips << "ADDI $sp,$sp," << i << "\n";
+    mips << "addi $sp,$sp," << i << endl;
     return mips.str();
 }
 
-Generator::Generator(): stack (8192)
+Generator::Generator() : stack(8192)
 {
-    data = "\n.data\n";
+    data = endl << ".data" << endl;
     data_counter = 0;
 }
 
 string Generator::run(FunctionTable& functions)
 {
-    stringstream mips;    
-    mips << ".text\n";
+    stringstream mips;
+    mips << ".text" << endl <<
+            ".org 0" << endl <<
+            "LI $sp," << stack.size << endl <<
+            "LI $fp," << stack.size << endl <<
+            "jal main" << endl <<
+            "BREAK" << endl;
 
     for (map<string, Function*>::iterator i = functions.symtable.begin(); i != functions.symtable.end(); ++i)
     {
         stack.fp = stack.size;
         stack.sp = stack.size;
-        
+
         Function &f = *(i->second);
         allocateVariables(f.variables);
 
@@ -60,8 +65,8 @@ string Generator::run(FunctionTable& functions)
             mips << string((*l)->generate(this));
         }
     }
-    
-    mips << data << "\n";
+
+    mips << data << endl;
 
     return mips.str();
 }

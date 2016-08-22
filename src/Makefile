@@ -48,5 +48,5 @@ clean:
 	location.hh position.hh stack.hh
 
 test:
-	(cd test; 	python3.2 -m unittest discover;)
+	(cd test; 	python3 -m unittest discover;)
 

@@ -1,5 +1,5 @@
 # Compiler of VYPe2014
-The school project for the Compiler Construction Course (VYPe).\
+The school project for the Compiler Construction Course (VYPe).
 Assembly generation is not finished.
 
 Used: C, C++, Python, flex, bison, valgrind
